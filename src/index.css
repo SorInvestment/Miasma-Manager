@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer utilities {
+  .glow-red {
+    text-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+  }
+  .glow-amber {
+    text-shadow: 0 0 8px rgba(251, 146, 60, 0.6);
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #101524;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #2a3550;
+    border-radius: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #3d4a6c;
+  }
+}
