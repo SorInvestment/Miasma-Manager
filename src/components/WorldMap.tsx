@@ -33,7 +33,7 @@ export function WorldMap() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/world-110m.json')
+    fetch(`${import.meta.env.BASE_URL}world-110m.json`)
       .then((r) => r.json())
       .then((topology) => {
         if (cancelled) return;

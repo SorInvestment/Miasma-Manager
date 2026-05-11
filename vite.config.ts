@@ -4,9 +4,15 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.GITHUB_PAGES ? '/Miasma-Manager/' : '/',
   server: {
     port: 5173,
     host: true,
+    allowedHosts: true,
+    hmr: {
+      clientPort: 443,
+      protocol: 'wss',
+    },
   },
   test: {
     environment: 'jsdom',
