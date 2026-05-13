@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from './state/gameStore';
 import { useGameLoop } from './hooks/useGameLoop';
+import { useAudio } from './hooks/useAudio';
 import { MainMenu } from './components/MainMenu';
 import { ScenariosScreen } from './components/ScenariosScreen';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -21,6 +22,7 @@ type Modal = 'mutations' | 'interventions' | 'charts' | 'pause' | null;
 
 export default function App() {
   useGameLoop();
+  useAudio();
   const phase = useGameStore((s) => s.phase);
   const [modal, setModal] = useState<Modal>(null);
 
