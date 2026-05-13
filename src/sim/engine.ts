@@ -125,32 +125,59 @@ export function tick(state: GameState): GameState {
   const livingInfected = totals.E + totals.I;
   const burnedOut = livingInfected < 1 && state.day > 30;
 
+  let countriesInfected = 0;
+  const seenCountries = new Set<string>();
+  for (const c of Object.values(nextState.cities)) {
+    if (c.I > 0 || c.E > 0) {
+      if (!seenCountries.has(c.country)) {
+        seenCountries.add(c.country);
+        countriesInfected++;
+      }
+    }
+  }
+
+  let containedDays = nextState.containedDays;
+  if (nextState.winCondition === 'contain-spread') {
+    containedDays = countriesInfected < 5 ? containedDays + 1 : 0;
+  } else if (nextState.winCondition === 'time-survive') {
+    containedDays += 1;
+  }
+
+  const deathLimit = nextState.scenarioDeathLimit > 0 ? nextState.scenarioDeathLimit : DEFENDER_DEATH_LIMIT_RATIO;
+  const newDay = state.day + 1;
+
   let phase = nextState.phase;
   if (nextState.mode === 'pathogen') {
     if (nextState.cureProgress >= 1) {
       phase = 'lost';
-    } else if (deadRatio >= 0.65) {
-      phase = 'won';
-    } else if (burnedOut) {
-      phase = deadRatio > 0.45 ? 'won' : 'lost';
+    } else if (nextState.winCondition === 'kill-percent') {
+      if (deadRatio >= nextState.winThreshold) phase = 'won';
+      else if (burnedOut) phase = 'lost';
+    } else {
+      if (deadRatio >= 0.65) phase = 'won';
+      else if (burnedOut) phase = deadRatio > 0.45 ? 'won' : 'lost';
     }
   } else {
-    if (deadRatio >= DEFENDER_DEATH_LIMIT_RATIO) {
+    if (deadRatio >= deathLimit) {
       phase = 'lost';
-    } else if (nextState.cureProgress >= 1) {
-      phase = 'won';
-    } else if (burnedOut) {
-      phase = 'won';
+    } else if (nextState.winCondition === 'contain-spread') {
+      if (containedDays >= nextState.winThreshold) phase = 'won';
+    } else if (nextState.winCondition === 'time-survive') {
+      if (containedDays >= nextState.winThreshold) phase = 'won';
+    } else {
+      if (nextState.cureProgress >= 1) phase = 'won';
+      else if (burnedOut) phase = 'won';
     }
   }
 
   return {
     ...nextState,
-    day: state.day + 1,
+    day: newDay,
     dnaPoints,
     budget,
     history: [...nextState.history, point],
     events: [...nextState.events, ...eventsToAdd],
     phase,
+    containedDays,
   };
 }

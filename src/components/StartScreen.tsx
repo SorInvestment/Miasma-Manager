@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useGameStore } from '../state/gameStore';
 import { CITIES_LIST } from '../data/cities';
 import type { Difficulty, GameMode, PathogenType } from '../sim/types';
 import { DIFFICULTY_LIST, DIFFICULTY_LABELS, DIFFICULTY_BLURBS } from '../sim/difficulty';
+import { scenariosForSide, SCENARIO_INDEX } from '../sim/scenarios';
 
 const MODES: { id: GameMode; title: string; sub: string; description: string }[] = [
   {
@@ -23,6 +24,9 @@ const PATHOGENS: { id: PathogenType; name: string; description: string }[] = [
   { id: 'virus', name: 'Virus', description: 'Fast-evolving, easily transmitted, harder to resist therapy.' },
   { id: 'bacteria', name: 'Bacteria', description: 'Hardy, persistent. Long infectious period; antibiotic resistance possible.' },
   { id: 'fungus', name: 'Fungus', description: 'Slow but inexorable. Excellent in warm climates; resists pharmaceuticals.' },
+  { id: 'parasite', name: 'Parasite', description: 'Vector-locked. Tropical menace with slow climb and long carry.' },
+  { id: 'prion', name: 'Prion', description: 'Silent for months. Then everyone dies. Extreme drug resistance.' },
+  { id: 'bioweapon', name: 'Bioweapon', description: 'Engineered. Hot, loud, immediately detected. Race the cure.' },
 ];
 
 export function StartScreen() {
@@ -32,6 +36,19 @@ export function StartScreen() {
   const [startCityId, setStartCityId] = useState<string>('lon');
   const [pathogenName, setPathogenName] = useState<string>('');
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
+  const [scenarioId, setScenarioId] = useState<string>('sandbox-pathogen');
+
+  const scenarios = useMemo(() => scenariosForSide(mode), [mode]);
+  const selectedScenario = SCENARIO_INDEX[scenarioId] ?? scenarios[0];
+
+  useEffect(() => {
+    const stillValid = scenarios.find((s) => s.id === scenarioId);
+    if (!stillValid) {
+      setScenarioId(scenarios[0].id);
+      setPathogenType(scenarios[0].pathogenType);
+      setDifficulty(scenarios[0].recommendedDifficulty);
+    }
+  }, [mode, scenarios, scenarioId]);
 
   return (
     <div className="flex h-screen items-center justify-center overflow-auto bg-gradient-to-b from-ink-900 via-plague-900 to-ink-900 p-6">
@@ -60,6 +77,34 @@ export function StartScreen() {
                   <div className="font-mono text-lg font-bold text-plague-100">{m.title}</div>
                   <div className="text-xs uppercase tracking-wider text-plague-300">{m.sub}</div>
                   <p className="mt-2 text-sm text-ink-300">{m.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mb-6">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-ink-300">Scenario</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {scenarios.map((s) => {
+              const active = scenarioId === s.id;
+              return (
+                <button
+                  key={s.id}
+                  data-testid={`scenario-${s.id}`}
+                  onClick={() => {
+                    setScenarioId(s.id);
+                    setPathogenType(s.pathogenType);
+                    setDifficulty(s.recommendedDifficulty);
+                  }}
+                  className={`rounded-md border p-2 text-left transition ${
+                    active
+                      ? 'border-plague-500 bg-plague-900/40 ring-2 ring-plague-500/50'
+                      : 'border-ink-600 bg-ink-700/50 hover:border-ink-500'
+                  }`}
+                >
+                  <div className="font-mono text-sm font-bold">{s.name}</div>
+                  <p className="mt-0.5 text-[11px] text-ink-300 leading-snug">{s.blurb}</p>
                 </button>
               );
             })}
@@ -150,7 +195,16 @@ export function StartScreen() {
 
         <button
           data-testid="start-button"
-          onClick={() => startGame({ mode, pathogenType, startCityId, pathogenName, difficulty })}
+          onClick={() =>
+            startGame({
+              mode,
+              pathogenType: selectedScenario.id !== `sandbox-${mode}` ? selectedScenario.pathogenType : pathogenType,
+              startCityId,
+              pathogenName,
+              difficulty,
+              scenarioId: selectedScenario.id,
+            })
+          }
           className="w-full rounded-md bg-plague-500 px-4 py-3 font-mono text-lg font-bold text-ink-900 transition hover:bg-plague-300 active:scale-[0.99]"
         >
           BEGIN OUTBREAK

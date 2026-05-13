@@ -2,9 +2,15 @@ export type Climate = 'arctic' | 'temperate' | 'tropical' | 'arid';
 export type Wealth = 1 | 2 | 3;
 export type GameMode = 'pathogen' | 'defender';
 export type Phase = 'start' | 'playing' | 'won' | 'lost';
-export type PathogenType = 'virus' | 'bacteria' | 'fungus';
+export type PathogenType = 'virus' | 'bacteria' | 'fungus' | 'parasite' | 'prion' | 'bioweapon';
 export type Speed = 0 | 1 | 2 | 3 | 5;
 export type Difficulty = 'casual' | 'normal' | 'hard' | 'brutal';
+export type WinCondition =
+  | 'standard'
+  | 'kill-percent'
+  | 'cure-before-day'
+  | 'contain-spread'
+  | 'time-survive';
 
 export type InterventionId =
   | 'lockdown'
@@ -140,4 +146,11 @@ export interface GameState {
   compliance: number;
   globalInterventions: Set<InterventionId>;
   difficulty: Difficulty;
+  scenarioId: string;
+  winCondition: WinCondition;
+  winThreshold: number;
+  lockedInterventions: Set<InterventionId>;
+  containedDays: number;
+  scenarioCureMultiplier: number;
+  scenarioDeathLimit: number;
 }

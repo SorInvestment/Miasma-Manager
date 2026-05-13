@@ -110,6 +110,7 @@ export function progressCureStages(state: GameState): GameState {
   };
 
   const autoFundingFactor = state.mode === 'pathogen' ? 0.7 : 1;
+  const scenarioMult = state.scenarioCureMultiplier || 1;
 
   const nextStages = { ...state.cure.stages } as Record<CureStageId, CureStage>;
   for (const id of CURE_STAGE_ORDER) {
@@ -117,7 +118,7 @@ export function progressCureStages(state: GameState): GameState {
     if (!s.unlocked || s.progress >= 1) continue;
     const fundingMod = 1 + s.funding / FUNDING_DIVISORS[id];
     const raw = (drivers[id] * fundingMod) / drugDivisors[id];
-    const delta = raw * mults.cureRate * autoFundingFactor;
+    const delta = raw * mults.cureRate * autoFundingFactor * scenarioMult;
     const nextProgress = Math.min(1, s.progress + delta);
     if (nextProgress !== s.progress) {
       nextStages[id] = { ...s, progress: nextProgress };

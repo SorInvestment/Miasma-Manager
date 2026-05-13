@@ -10,6 +10,8 @@ export function InterventionPanel({ onClose }: Props) {
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const cities = useGameStore((s) => s.cities);
   const deploy = useGameStore((s) => s.deployInterventionAction);
+  const lockedInterventions = useGameStore((s) => s.lockedInterventions);
+  const globalInterventions = useGameStore((s) => s.globalInterventions);
   const selected = selectedCityId ? cities[selectedCityId] : null;
 
   return (
@@ -49,9 +51,12 @@ export function InterventionPanel({ onClose }: Props) {
           {INTERVENTIONS.map((i) => {
             const isGlobal = i.scope === 'global';
             const targetId = isGlobal ? null : selectedCityId;
-            const alreadyApplied = targetId ? cities[targetId]?.interventions.has(i.id) : false;
+            const alreadyApplied = isGlobal
+              ? globalInterventions.has(i.id)
+              : targetId ? cities[targetId]?.interventions.has(i.id) : false;
+            const isLocked = lockedInterventions.has(i.id);
             const canAfford = budget >= i.cost;
-            const canDeploy = canAfford && !alreadyApplied && (isGlobal || !!selectedCityId);
+            const canDeploy = !isLocked && canAfford && !alreadyApplied && (isGlobal || !!selectedCityId);
 
             return (
               <button
@@ -60,23 +65,26 @@ export function InterventionPanel({ onClose }: Props) {
                 onClick={() => canDeploy && deploy(i.id, targetId)}
                 disabled={!canDeploy}
                 className={`rounded-lg border p-3 text-left transition ${
-                  alreadyApplied
-                    ? 'border-emerald-700 bg-emerald-900/30 opacity-60'
-                    : canDeploy
-                      ? 'border-cyan-700 bg-cyan-900/20 hover:bg-cyan-900/40'
-                      : 'border-ink-700 bg-ink-700/30 opacity-50'
+                  isLocked
+                    ? 'border-ink-800 bg-ink-800/50 opacity-40'
+                    : alreadyApplied
+                      ? 'border-emerald-700 bg-emerald-900/30 opacity-60'
+                      : canDeploy
+                        ? 'border-cyan-700 bg-cyan-900/20 hover:bg-cyan-900/40'
+                        : 'border-ink-700 bg-ink-700/30 opacity-50'
                 } ${canDeploy ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
                 <div className="mb-1 flex items-center justify-between">
                   <span className="font-mono text-sm font-bold text-cyan-100">{i.name}</span>
                   <span className="text-xs text-cyan-300">
-                    {alreadyApplied ? 'Active ✓' : `$${i.cost}M`}
+                    {isLocked ? 'Locked' : alreadyApplied ? 'Active ✓' : `$${i.cost}M`}
                   </span>
                 </div>
                 <p className="text-xs text-ink-300">{i.description}</p>
                 <p className="mt-1 text-[10px] text-cyan-300">
                   Scope: <span className="uppercase">{i.scope}</span>
-                  {!isGlobal && !selectedCityId && <span className="ml-1 text-amber-300">(select a city)</span>}
+                  {!isGlobal && !selectedCityId && !isLocked && <span className="ml-1 text-amber-300">(select a city)</span>}
+                  {isLocked && <span className="ml-1 text-amber-300">(scenario-locked)</span>}
                 </p>
               </button>
             );

@@ -23,6 +23,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     budget: 0,
     cureProgress: 0,
     cureFundingLevel: 0,
+    cure: makeInitialCureState(),
     events: [],
     phase: 'playing',
     selectedCityId: null,
@@ -32,6 +33,13 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     compliance: 0.85,
     globalInterventions: new Set(),
     difficulty: 'normal',
+    scenarioId: 'sandbox-pathogen',
+    winCondition: 'standard',
+    winThreshold: 0,
+    lockedInterventions: new Set(),
+    containedDays: 0,
+    scenarioCureMultiplier: 1,
+    scenarioDeathLimit: 0,
     ...overrides,
   };
 }

@@ -37,6 +37,13 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     history: [], initialPopulation: 1_000_000, autoPauseTriggers: new Set(),
     compliance: 0.85, globalInterventions: new Set(),
     difficulty: 'normal',
+    scenarioId: 'sandbox-pathogen',
+    winCondition: 'standard',
+    winThreshold: 0,
+    lockedInterventions: new Set(),
+    containedDays: 0,
+    scenarioCureMultiplier: 1,
+    scenarioDeathLimit: 0,
     ...overrides,
   };
 }

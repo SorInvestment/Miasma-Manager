@@ -46,6 +46,13 @@ function makeState(cities: Record<string, City>, overrides: Partial<GameState> =
     history: [], initialPopulation: 1_000_000, autoPauseTriggers: new Set(),
     compliance: COMPLIANCE_INITIAL, globalInterventions: new Set(),
     difficulty: 'normal',
+    scenarioId: 'sandbox-pathogen',
+    winCondition: 'standard',
+    winThreshold: 0,
+    lockedInterventions: new Set(),
+    containedDays: 0,
+    scenarioCureMultiplier: 1,
+    scenarioDeathLimit: 0,
     ...overrides,
   };
 }

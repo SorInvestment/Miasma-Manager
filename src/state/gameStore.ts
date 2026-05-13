@@ -8,7 +8,8 @@ import { fundResearch, fundStage, makeInitialCureState } from '../sim/cure';
 import { INTERVENTION_INDEX } from '../data/interventions';
 import { COMPLIANCE_INITIAL } from '../sim/compliance';
 import { getMultipliers } from '../sim/difficulty';
-import type { CureStageId, Difficulty } from '../sim/types';
+import { SCENARIO_INDEX, defaultScenarioFor, type Scenario } from '../sim/scenarios';
+import type { CureStageId, Difficulty, WinCondition } from '../sim/types';
 
 const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
   virus: {
@@ -35,6 +36,30 @@ const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
     drugResistance: 0.4,
     mutations: new Set(),
   },
+  parasite: {
+    name: 'Parasite', type: 'parasite',
+    transmissibility: 0.30, incubation: 8, infectiousPeriod: 22,
+    lethality: 0.025, severity: 0.4,
+    climateTolerance: { arctic: 0.2, temperate: 0.7, tropical: 1.0, arid: 0.8 },
+    drugResistance: 0.3,
+    mutations: new Set(),
+  },
+  prion: {
+    name: 'Prion', type: 'prion',
+    transmissibility: 0.18, incubation: 30, infectiousPeriod: 60,
+    lethality: 0.95, severity: 0.55,
+    climateTolerance: { arctic: 1.0, temperate: 1.0, tropical: 1.0, arid: 1.0 },
+    drugResistance: 1.5,
+    mutations: new Set(),
+  },
+  bioweapon: {
+    name: 'Bioweapon', type: 'bioweapon',
+    transmissibility: 0.65, incubation: 2, infectiousPeriod: 5,
+    lethality: 0.12, severity: 0.85,
+    climateTolerance: { arctic: 0.95, temperate: 1.0, tropical: 1.0, arid: 0.95 },
+    drugResistance: 0.6,
+    mutations: new Set(),
+  },
 };
 
 interface StartGameOpts {
@@ -43,6 +68,7 @@ interface StartGameOpts {
   startCityId: string;
   pathogenName?: string;
   difficulty?: Difficulty;
+  scenarioId?: string;
 }
 
 interface StoreActions {
@@ -87,6 +113,13 @@ const initialState: GameState = {
   compliance: COMPLIANCE_INITIAL,
   globalInterventions: new Set(),
   difficulty: 'normal',
+  scenarioId: 'sandbox-pathogen',
+  winCondition: 'standard',
+  winThreshold: 0,
+  lockedInterventions: new Set(),
+  containedDays: 0,
+  scenarioCureMultiplier: 1,
+  scenarioDeathLimit: 0,
 };
 
 function checkAutoPause(prev: GameState, next: GameState): { triggers: string[]; nextTriggers: Set<string> } {
@@ -124,45 +157,135 @@ export const useGameStore = create<GameStore>((set, get) => ({
         : modeOrOpts;
     const difficulty: Difficulty = opts.difficulty ?? get().difficulty ?? 'normal';
     const mults = getMultipliers(difficulty);
+
+    const scenario: Scenario = opts.scenarioId
+      ? SCENARIO_INDEX[opts.scenarioId] ?? defaultScenarioFor(opts.mode)
+      : defaultScenarioFor(opts.mode);
+    const mods = scenario.modifiers;
+
     const cities = makeCitiesIndex();
-    const startCity = cities[opts.startCityId];
-    if (startCity) {
-      const seed = Math.min(50, startCity.S);
-      cities[opts.startCityId] = { ...startCity, S: startCity.S - seed, I: seed };
+    const seedCities = mods.startCities && mods.startCities.length > 0
+      ? mods.startCities
+      : [opts.startCityId];
+
+    for (const cid of seedCities) {
+      const c = cities[cid];
+      if (!c) continue;
+      const seed = Math.min(50, c.S);
+      cities[cid] = { ...c, S: c.S - seed, I: c.I + seed };
     }
+
+    if (mods.preDeadRatio) {
+      for (const id of Object.keys(cities)) {
+        const c = cities[id];
+        const dead = Math.round(c.population * mods.preDeadRatio);
+        cities[id] = { ...c, S: Math.max(0, c.S - dead), D: c.D + dead };
+      }
+    }
+    if (mods.preInfected) {
+      for (const id of Object.keys(cities)) {
+        const c = cities[id];
+        const infected = Math.round(c.S * mods.preInfected);
+        cities[id] = { ...c, S: c.S - infected, I: c.I + infected, detected: true };
+      }
+    }
+    if (mods.preRecovered) {
+      for (const id of Object.keys(cities)) {
+        const c = cities[id];
+        const recovered = Math.round(c.S * mods.preRecovered);
+        cities[id] = { ...c, S: c.S - recovered, R: c.R + recovered };
+      }
+    }
+    if (mods.healthcareOverloadMultiplier) {
+      for (const id of Object.keys(cities)) {
+        const c = cities[id];
+        cities[id] = { ...c, healthcareLoad: c.healthcareCapacity * mods.healthcareOverloadMultiplier };
+      }
+    }
+
     const preset = PATHOGEN_PRESETS[opts.pathogenType];
     const pathogen: Pathogen = {
       ...preset,
       name: opts.pathogenName?.trim() || preset.name,
       climateTolerance: { ...preset.climateTolerance },
       mutations: new Set(),
+      ...(mods.pathogenOverrides ?? {}),
     };
+    if (mods.pathogenOverrides?.climateTolerance) {
+      pathogen.climateTolerance = { ...pathogen.climateTolerance, ...mods.pathogenOverrides.climateTolerance };
+    }
+
+    const baseBudget = opts.mode === 'defender' ? Math.round(10 * mults.startResources) : 0;
+    const budget = mods.budgetMultiplier ? Math.round(baseBudget * mods.budgetMultiplier) : baseBudget;
+    const baseDna = opts.mode === 'pathogen' ? Math.round(4 * mults.startResources) : 0;
+    const dnaPoints = mods.dnaMultiplier ? Math.round(baseDna * mods.dnaMultiplier) : baseDna;
+
+    const cure = makeInitialCureState();
+    if (mods.preCureStageProgress) {
+      for (const { stageId, progress } of mods.preCureStageProgress) {
+        cure.stages[stageId].progress = Math.min(1, Math.max(0, progress));
+      }
+      let unlock = true;
+      for (const id of (['sequencing', 'vaccine-rd', 'trials', 'distribution'] as CureStageId[])) {
+        cure.stages[id].unlocked = unlock;
+        unlock = cure.stages[id].progress >= 1;
+      }
+      cure.overall = (cure.stages.sequencing.progress + cure.stages['vaccine-rd'].progress + cure.stages.trials.progress + cure.stages.distribution.progress) / 4;
+      const order: CureStageId[] = ['sequencing', 'vaccine-rd', 'trials', 'distribution'];
+      cure.activeStageId = order.find((id) => cure.stages[id].progress < 1) ?? 'distribution';
+    }
+
+    const lockedInterventions = new Set<InterventionId>();
+    if (mods.unlockedInterventions) {
+      const unlocked = new Set(mods.unlockedInterventions);
+      for (const iv of Object.keys(INTERVENTION_INDEX) as InterventionId[]) {
+        if (!unlocked.has(iv)) lockedInterventions.add(iv);
+      }
+    }
+
+    const globalInterventions = new Set<InterventionId>(mods.preActiveGlobalInterventions ?? []);
+    const compliance = mods.startCompliance ?? COMPLIANCE_INITIAL;
+
+    const winCondition: WinCondition = mods.winCondition ?? 'standard';
+    const winThreshold = mods.winThreshold ?? 0;
+
+    const startCity = cities[seedCities[0]];
+
     set({
       mode: opts.mode,
-      day: 0,
+      day: mods.startDay ?? 0,
       speed: 1,
       cities,
       pathogen,
-      dnaPoints: opts.mode === 'pathogen' ? Math.round(4 * mults.startResources) : 0,
-      budget: opts.mode === 'defender' ? Math.round(10 * mults.startResources) : 0,
-      cureProgress: 0,
+      dnaPoints,
+      budget,
+      cureProgress: cure.overall,
       cureFundingLevel: 0,
-      cure: makeInitialCureState(),
+      cure,
       events: [
         {
-          day: 0,
-          text: `Outbreak began in ${startCity?.name ?? opts.startCityId}`,
+          day: mods.startDay ?? 0,
+          text: seedCities.length > 1
+            ? `Outbreak began in ${seedCities.length} cities`
+            : `Outbreak began in ${startCity?.name ?? seedCities[0]}`,
           kind: 'system',
         },
       ],
       phase: 'playing',
-      selectedCityId: opts.startCityId,
+      selectedCityId: seedCities[0],
       history: [],
       initialPopulation: totalWorldPopulation(),
       autoPauseTriggers: new Set(),
-      compliance: COMPLIANCE_INITIAL,
-      globalInterventions: new Set(),
+      compliance,
+      globalInterventions,
       difficulty,
+      scenarioId: scenario.id,
+      winCondition,
+      winThreshold,
+      lockedInterventions,
+      containedDays: 0,
+      scenarioCureMultiplier: mods.cureRateMultiplier ?? 1,
+      scenarioDeathLimit: mods.deathLimitRatio ?? 0,
     });
   },
 
@@ -209,7 +332,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set(next);
   },
 
-  resetGame: () => set({ ...initialState, cities: makeCitiesIndex(), autoPauseTriggers: new Set(), globalInterventions: new Set() }),
+  resetGame: () => set({ ...initialState, cities: makeCitiesIndex(), autoPauseTriggers: new Set(), globalInterventions: new Set(), lockedInterventions: new Set() }),
 
   clearAutoPause: (key) => set((state) => {
     const next = new Set(state.autoPauseTriggers);
