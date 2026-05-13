@@ -10,10 +10,11 @@ const CATEGORY_TITLES: Record<MutationCategory, string> = {
   transmission: 'Transmission',
   symptom: 'Symptoms',
   ability: 'Abilities',
+  evasion: 'Evasion',
   lethality: 'Lethality',
 };
 
-const CATEGORIES: MutationCategory[] = ['transmission', 'symptom', 'ability', 'lethality'];
+const CATEGORIES: MutationCategory[] = ['transmission', 'symptom', 'ability', 'evasion', 'lethality'];
 
 export function MutationTree({ onClose }: Props) {
   const dna = useGameStore((s) => s.dnaPoints);

@@ -51,7 +51,7 @@ describe('transport', () => {
   it('applyTransfers moves infected from source to destination exposed', () => {
     const a = makeCity('a', { I: 100, S: 900, population: 1000, ports: { air: ['b'], sea: [], land: [] } });
     const b = makeCity('b', { I: 0, S: 1000, E: 0, population: 1000, ports: { air: ['a'], sea: [], land: [] } });
-    const next = applyTransfers({ a, b }, [{ fromId: 'a', toId: 'b', mode: 'air', count: 10 }]);
+    const next = applyTransfers({ a, b }, [{ fromId: 'a', toId: 'b', mode: 'air', count: 10, strainId: 'origin' }]);
     expect(next.a.I).toBe(90);
     expect(next.b.E).toBe(10);
   });

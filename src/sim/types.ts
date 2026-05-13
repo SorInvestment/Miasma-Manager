@@ -88,6 +88,7 @@ export type MutationCategory =
   | 'transmission'
   | 'symptom'
   | 'ability'
+  | 'evasion'
   | 'lethality';
 
 export interface MutationEffect {
@@ -98,6 +99,11 @@ export interface MutationEffect {
   severity?: number;
   drugResistance?: number;
   climateTolerance?: Partial<Record<Climate, number>>;
+  complianceDelta?: number;
+  surfacePersistence?: number;
+  spawnsStrain?: boolean;
+  reinfectionRate?: number;
+  cureStageRollback?: { stageId: CureStageId; amount: number };
 }
 
 export interface Mutation {
@@ -108,6 +114,7 @@ export interface Mutation {
   cost: number;
   prereqs: string[];
   effect: MutationEffect;
+  pathogenTypeOnly?: PathogenType[];
 }
 
 export interface Intervention {

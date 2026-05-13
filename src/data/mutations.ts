@@ -261,6 +261,210 @@ export const MUTATIONS: Mutation[] = [
     prereqs: ['hemorrhage'],
     effect: { lethality: 0.12, severity: 0.22 },
   },
+
+  // Evasion — vaccine + immune escape
+  {
+    id: 'immune-escape',
+    name: 'Immune Escape',
+    description: 'A spike protein variant evades earlier antibodies. Spawns a new strain.',
+    category: 'evasion',
+    cost: 14,
+    prereqs: ['drug-resist-1'],
+    effect: { drugResistance: 0.6, spawnsStrain: true, cureStageRollback: { stageId: 'vaccine-rd', amount: 0.6 } },
+  },
+  {
+    id: 'antigenic-drift',
+    name: 'Antigenic Drift',
+    description: 'Gradual mutation evades existing trial regimens.',
+    category: 'evasion',
+    cost: 10,
+    prereqs: [],
+    effect: { drugResistance: 0.3, cureStageRollback: { stageId: 'trials', amount: 0.3 } },
+  },
+  {
+    id: 'vaccine-evasion',
+    name: 'Vaccine Evasion',
+    description: 'Direct evasion of approved vaccine candidates.',
+    category: 'evasion',
+    cost: 16,
+    prereqs: ['immune-escape'],
+    effect: { drugResistance: 0.4, spawnsStrain: true, cureStageRollback: { stageId: 'vaccine-rd', amount: 0.4 } },
+  },
+  {
+    id: 'reinfection',
+    name: 'Reinfection Capability',
+    description: 'Recovered hosts gradually return to susceptible.',
+    category: 'evasion',
+    cost: 18,
+    prereqs: ['vaccine-evasion'],
+    effect: { reinfectionRate: 0.05 },
+  },
+  {
+    id: 'genome-shuffle',
+    name: 'Genome Shuffle',
+    description: 'Whole-genome reassortment defeats sequencing.',
+    category: 'evasion',
+    cost: 22,
+    prereqs: ['antigenic-drift', 'immune-escape'],
+    effect: { drugResistance: 0.8, spawnsStrain: true, cureStageRollback: { stageId: 'sequencing', amount: 0.5 } },
+  },
+
+  // Ability — surface persistence
+  {
+    id: 'surface-fomite-1',
+    name: 'Surface Persistence I',
+    description: 'Survives on doorknobs and elevator buttons for hours.',
+    category: 'ability',
+    cost: 5,
+    prereqs: [],
+    effect: { surfacePersistence: 0.4, infectiousPeriod: 1 },
+  },
+  {
+    id: 'surface-fomite-2',
+    name: 'Surface Persistence II',
+    description: 'Persists on surfaces for days; resists most cleaners.',
+    category: 'ability',
+    cost: 9,
+    prereqs: ['surface-fomite-1'],
+    effect: { surfacePersistence: 0.6, transmissibility: 0.05 },
+  },
+
+  // Transmission — vertical / super-spread
+  {
+    id: 'vertical-transmission',
+    name: 'Vertical Transmission',
+    description: 'Crosses placenta; newborns are infected at birth.',
+    category: 'transmission',
+    cost: 11,
+    prereqs: [],
+    effect: { transmissibility: 0.1 },
+  },
+  {
+    id: 'super-spreader',
+    name: 'Super-spreader Phenotype',
+    description: 'Asymptomatic carriers shed massive viral loads in crowds.',
+    category: 'ability',
+    cost: 13,
+    prereqs: ['airborne-2'],
+    effect: { transmissibility: 0.18, severity: 0.05 },
+  },
+
+  // Symptom — psychiatric
+  {
+    id: 'paranoia',
+    name: 'Paranoia',
+    description: 'Hosts distrust authority; defies public-health orders.',
+    category: 'symptom',
+    cost: 9,
+    prereqs: [],
+    effect: { complianceDelta: -0.012 },
+  },
+  {
+    id: 'psychosis',
+    name: 'Psychotic Break',
+    description: 'Severe psychiatric symptoms collapse compliance further.',
+    category: 'symptom',
+    cost: 12,
+    prereqs: ['paranoia'],
+    effect: { complianceDelta: -0.02, severity: 0.1 },
+  },
+
+  // Ability — bacteria-specific
+  {
+    id: 'biofilm',
+    name: 'Biofilm Formation',
+    description: 'Bacterial colonies secrete protective matrix.',
+    category: 'ability',
+    cost: 11,
+    prereqs: [],
+    pathogenTypeOnly: ['bacteria'],
+    effect: { drugResistance: 0.4 },
+  },
+  {
+    id: 'spore-form',
+    name: 'Sporulation',
+    description: 'Forms hardy spores that survive harsh environments.',
+    category: 'ability',
+    cost: 13,
+    prereqs: [],
+    pathogenTypeOnly: ['bacteria', 'fungus'],
+    effect: { infectiousPeriod: 5, climateTolerance: { arid: 0.3 } },
+  },
+  {
+    id: 'antibiotic-resist',
+    name: 'Antibiotic Resistance',
+    description: 'Defeats first-line antibiotics; therapy choices narrow.',
+    category: 'ability',
+    cost: 17,
+    prereqs: ['biofilm'],
+    pathogenTypeOnly: ['bacteria'],
+    effect: { drugResistance: 1.0 },
+  },
+
+  // Transmission — vector / climate
+  {
+    id: 'vector-switch-mosquito',
+    name: 'Vector Switch: Mosquitoes',
+    description: 'Mosquito co-infection opens tropical megacities.',
+    category: 'transmission',
+    cost: 8,
+    prereqs: ['insect-1'],
+    effect: { transmissibility: 0.12, climateTolerance: { tropical: 0.2 } },
+  },
+  {
+    id: 'vector-switch-bird',
+    name: 'Vector Switch: Avian',
+    description: 'Migratory birds carry pathogen across continents.',
+    category: 'transmission',
+    cost: 12,
+    prereqs: [],
+    effect: {
+      transmissibility: 0.1,
+      climateTolerance: { arctic: 0.1, temperate: 0.1, tropical: 0.1, arid: 0.1 },
+    },
+  },
+  {
+    id: 'zoonotic-spillback',
+    name: 'Zoonotic Spillback',
+    description: 'Wildlife reservoirs reseed outbreaks invisibly.',
+    category: 'transmission',
+    cost: 10,
+    prereqs: [],
+    effect: { transmissibility: 0.08 },
+  },
+
+  // Symptom — concealment
+  {
+    id: 'asymptomatic-3',
+    name: 'Total Concealment',
+    description: 'No detectable symptoms in 90%+ of hosts.',
+    category: 'symptom',
+    cost: 12,
+    prereqs: ['asymptomatic-2'],
+    effect: { severity: -0.3, incubation: 3 },
+  },
+
+  // Ability — heat tolerance
+  {
+    id: 'heat-shock-tolerance',
+    name: 'Heat-shock Protein',
+    description: 'Survives febrile temperatures and tropical climates.',
+    category: 'ability',
+    cost: 8,
+    prereqs: ['heat-resist-1'],
+    effect: { transmissibility: 0.05, climateTolerance: { tropical: 0.2 } },
+  },
+
+  // Lethality — neuroinvasive
+  {
+    id: 'neuro-invasive',
+    name: 'Neuroinvasive Strain',
+    description: 'Crosses blood-brain barrier; outcomes worsen sharply.',
+    category: 'lethality',
+    cost: 16,
+    prereqs: ['organ-failure'],
+    effect: { lethality: 0.08, severity: 0.2 },
+  },
 ];
 
 export const MUTATION_INDEX: Record<string, Mutation> = Object.fromEntries(

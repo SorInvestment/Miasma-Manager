@@ -4,7 +4,8 @@ import { computeTransfers, applyTransfers } from './transport';
 import { updateDetection, aiPathogenModeInterventions } from './government';
 import { progressCureStages } from './cure';
 import { applyMutationEffect, pickAIMutation } from './mutation';
-import { applyComplianceTickDelta } from './compliance';
+import { applyComplianceTickDelta, adjustCompliance } from './compliance';
+import { MUTATIONS } from '../data/mutations';
 import { getMultipliers } from './difficulty';
 import {
   DNA_PER_NEW_INFECTION,
@@ -70,6 +71,15 @@ export function tick(state: GameState): GameState {
   nextState = aiPathogenModeInterventions(nextState);
   nextState = progressCureStages(nextState);
   nextState = applyComplianceTickDelta(nextState);
+
+  let complianceDelta = 0;
+  for (const m of MUTATIONS) {
+    if (!nextState.pathogen.mutations.has(m.id)) continue;
+    if (m.effect.complianceDelta) complianceDelta += m.effect.complianceDelta;
+  }
+  if (complianceDelta !== 0) {
+    nextState = adjustCompliance(nextState, complianceDelta);
+  }
 
   const newInfections = newInfectionsThisTick(state.cities, nextState.cities);
   const newDeaths = newDeathsThisTick(state.cities, nextState.cities);
