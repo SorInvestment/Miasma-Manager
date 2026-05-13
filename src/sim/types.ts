@@ -137,7 +137,7 @@ export interface Intervention {
 export interface GameEvent {
   day: number;
   text: string;
-  kind: 'detection' | 'cure' | 'mutation' | 'intervention' | 'death' | 'system';
+  kind: 'detection' | 'cure' | 'mutation' | 'intervention' | 'death' | 'system' | 'world-event';
 }
 
 export interface HistoryPoint {

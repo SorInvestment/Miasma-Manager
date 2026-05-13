@@ -8,6 +8,7 @@ import { applyComplianceTickDelta, adjustCompliance } from './compliance';
 import { MUTATIONS } from '../data/mutations';
 import { getMultipliers } from './difficulty';
 import { applyExpiry, applyVaccineRollout, isAntiviralActive } from './interventions';
+import { tryFireRandomEvent } from './events';
 import {
   DNA_PER_NEW_INFECTION,
   DNA_NEW_COUNTRY_BONUS,
@@ -79,6 +80,7 @@ export function tick(state: GameState): GameState {
   nextState = aiPathogenModeInterventions(nextState);
   nextState = progressCureStages(nextState);
   nextState = applyComplianceTickDelta(nextState);
+  nextState = tryFireRandomEvent(nextState);
 
   let complianceDelta = 0;
   for (const m of MUTATIONS) {
