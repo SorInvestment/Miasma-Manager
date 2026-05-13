@@ -1,5 +1,6 @@
 import { useGameStore } from '../state/gameStore';
 import { CURE_STAGE_ORDER, CURE_STAGE_LABELS } from '../sim/cure';
+import { CountryList } from './CountryList';
 
 interface Props {
   onOpenMutations: () => void;
@@ -47,6 +48,8 @@ export function SidePanel({ onOpenMutations, onOpenInterventions, onOpenCharts }
         <Stat label="Dead" value={format(D)} className="text-plague-500" />
         <Stat label="Cities detected" value={`${detected} / ${Object.keys(cities).length}`} className="text-ink-100" />
       </section>
+
+      <CountryList limit={12} />
 
       <section className="rounded-md border border-ink-700 bg-ink-700/40 p-3">
         <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-300">Pathogen</h3>

@@ -28,7 +28,9 @@ export function WorldMap() {
   const [features, setFeatures] = useState<Feature<Geometry>[] | null>(null);
   const [dims, setDims] = useState<{ w: number; h: number }>({ w: 1200, h: 600 });
   const cities = useGameStore((s) => s.cities);
+  const countries = useGameStore((s) => s.countries);
   const selectedCityId = useGameStore((s) => s.selectedCityId);
+  const selectedCountryCode = useGameStore((s) => s.selectedCountryCode);
   const selectCity = useGameStore((s) => s.selectCity);
 
   useEffect(() => {
@@ -126,6 +128,11 @@ export function WorldMap() {
     }
 
     for (const { city, x, y, radius, infectionRatio } of dots) {
+      const countryState = countries?.[city.countryCode];
+      const collapsed = !!countryState?.collapsed;
+      const bordersClosed = countryState?.borderPolicy === 'closed';
+      const selectedCountry = selectedCountryCode && city.countryCode === selectedCountryCode;
+
       const color = infectionColor(infectionRatio, city.detected);
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -134,6 +141,30 @@ export function WorldMap() {
       ctx.fill();
       ctx.globalAlpha = 1;
 
+      if (collapsed) {
+        const pulseR = radius + 6 + Math.sin(Date.now() / 400) * 2;
+        ctx.beginPath();
+        ctx.arc(x, y, pulseR, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+      if (bordersClosed) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 3, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(217, 119, 6, 0.65)';
+        ctx.setLineDash([2, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      if (selectedCountry) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 5, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(96, 165, 250, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
       if (city.id === selectedCityId) {
         ctx.beginPath();
         ctx.arc(x, y, radius + 4, 0, Math.PI * 2);
@@ -177,7 +208,7 @@ export function WorldMap() {
     };
     canvas.addEventListener('click', handleClick);
     return () => canvas.removeEventListener('click', handleClick);
-  }, [features, dims, cities, selectedCityId, selectCity]);
+  }, [features, dims, cities, countries, selectedCityId, selectedCountryCode, selectCity]);
 
   return (
     <div ref={containerRef} className="relative h-full w-full" data-testid="world-map">
