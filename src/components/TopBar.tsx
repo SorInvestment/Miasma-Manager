@@ -13,9 +13,10 @@ function formatNumber(n: number): string {
 
 interface Props {
   onOpenCharts?: () => void;
+  onOpenPause?: () => void;
 }
 
-export function TopBar(_props: Props) {
+export function TopBar(props: Props) {
   const day = useGameStore((s) => s.day);
   const speed = useGameStore((s) => s.speed);
   const mode = useGameStore((s) => s.mode);
@@ -100,6 +101,16 @@ export function TopBar(_props: Props) {
             {(compliance * 100).toFixed(0)}%
           </span>
         </div>
+        {props.onOpenPause && (
+          <button
+            data-testid="open-pause"
+            onClick={props.onOpenPause}
+            title="Menu (Esc)"
+            className="rounded border border-ink-600 bg-ink-700 px-2 py-1 text-xs text-ink-100 transition hover:border-plague-500 hover:bg-ink-600"
+          >
+            ☰
+          </button>
+        )}
         <div className="flex items-center gap-2" data-testid="cure-stages">
           <span className="text-ink-300">Cure</span>
           <div className="flex gap-0.5" role="group" aria-label="Cure stages">

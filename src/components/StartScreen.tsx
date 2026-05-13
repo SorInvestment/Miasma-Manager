@@ -31,6 +31,7 @@ const PATHOGENS: { id: PathogenType; name: string; description: string }[] = [
 
 export function StartScreen() {
   const startGame = useGameStore((s) => s.startGame);
+  const goToPhase = useGameStore((s) => s.goToPhase);
   const [mode, setMode] = useState<GameMode>('pathogen');
   const [pathogenType, setPathogenType] = useState<PathogenType>('virus');
   const [startCityId, setStartCityId] = useState<string>('lon');
@@ -54,6 +55,13 @@ export function StartScreen() {
     <div className="flex h-screen items-center justify-center overflow-auto bg-gradient-to-b from-ink-900 via-plague-900 to-ink-900 p-6">
       <div className="max-w-4xl rounded-xl border border-ink-700 bg-ink-800/80 p-8 shadow-2xl backdrop-blur">
         <header className="mb-6">
+          <button
+            data-testid="back-to-menu"
+            onClick={() => goToPhase('menu')}
+            className="mb-2 font-mono text-xs uppercase tracking-widest text-ink-300 hover:text-plague-300"
+          >
+            ← Main menu
+          </button>
           <h1 className="font-mono text-4xl font-bold text-plague-500 glow-red">MIASMA MANAGER</h1>
           <p className="mt-1 text-ink-300">A scientifically-grounded plague simulation.</p>
         </header>

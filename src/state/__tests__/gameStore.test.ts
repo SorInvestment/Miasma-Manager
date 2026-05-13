@@ -8,8 +8,8 @@ function reset() {
 describe('gameStore', () => {
   beforeEach(reset);
 
-  it('starts at phase=start', () => {
-    expect(useGameStore.getState().phase).toBe('start');
+  it('starts at phase=menu', () => {
+    expect(useGameStore.getState().phase).toBe('menu');
   });
 
   it('startGame transitions to playing phase and seeds the start city', () => {

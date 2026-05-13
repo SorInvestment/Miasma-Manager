@@ -36,22 +36,22 @@ function baseState(): GameState {
 describe('countryDynamics', () => {
   it('panic level grows in detected countries', () => {
     const state = baseState();
-    state.countries.US = { ...state.countries.US, detected: true, panicLevel: 0.1, D: 100_000 };
+    state.countries!.US = { ...state.countries!.US, detected: true, panicLevel: 0.1, D: 100_000 };
     const result = tickCountries(state);
-    expect(result.state.countries.US.panicLevel).toBeGreaterThan(0.1);
+    expect(result.state.countries!.US.panicLevel).toBeGreaterThan(0.1);
   });
 
   it('panic decays in undetected countries', () => {
     const state = baseState();
-    state.countries.AU = { ...state.countries.AU, detected: false, panicLevel: 0.3 };
+    state.countries!.AU = { ...state.countries!.AU, detected: false, panicLevel: 0.3 };
     const result = tickCountries(state);
-    expect(result.state.countries.AU.panicLevel).toBeLessThan(0.3);
+    expect(result.state.countries!.AU.panicLevel).toBeLessThan(0.3);
   });
 
   it('country collapses when infected fraction exceeds healthcare capacity * threshold', () => {
     const state = baseState();
-    const us = state.countries.US;
-    state.countries.US = {
+    const us = state.countries!.US;
+    state.countries!.US = {
       ...us,
       detected: true,
       I: us.population * us.healthcareCapacity * 5,
@@ -59,39 +59,39 @@ describe('countryDynamics', () => {
       S: us.population - us.population * us.healthcareCapacity * 5 - 100_000,
     };
     const result = tickCountries(state);
-    expect(result.state.countries.US.collapsed).toBe(true);
-    expect(result.state.countries.US.collapsedDay).toBe(10);
+    expect(result.state.countries!.US.collapsed).toBe(true);
+    expect(result.state.countries!.US.collapsedDay).toBe(10);
     expect(result.events.some((e) => /collapsed|overflow|hospitals|disintegrates/i.test(e.text))).toBe(true);
   });
 
   it('autocracies auto-close borders on first detection', () => {
     const state = baseState();
-    state.countries.CN = { ...state.countries.CN, detected: true, panicLevel: 0.1 };
+    state.countries!.CN = { ...state.countries!.CN, detected: true, panicLevel: 0.1 };
     const result = tickCountries(state);
-    expect(result.state.countries.CN.borderPolicy).toBe('closed');
+    expect(result.state.countries!.CN.borderPolicy).toBe('closed');
     expect(result.events.some((e) => e.text.includes('China'))).toBe(true);
   });
 
   it('democracies wait for panic before closing borders', () => {
     const state = baseState();
-    state.countries.FR = { ...state.countries.FR, detected: true, panicLevel: 0.1 };
+    state.countries!.FR = { ...state.countries!.FR, detected: true, panicLevel: 0.1 };
     const result = tickCountries(state);
-    expect(result.state.countries.FR.borderPolicy).not.toBe('closed');
+    expect(result.state.countries!.FR.borderPolicy).not.toBe('closed');
   });
 
   it('democracies close borders when panic is high', () => {
     const state = baseState();
-    state.countries.FR = { ...state.countries.FR, detected: true, panicLevel: 0.7 };
+    state.countries!.FR = { ...state.countries!.FR, detected: true, panicLevel: 0.7 };
     const result = tickCountries(state);
-    expect(result.state.countries.FR.borderPolicy).toBe('closed');
+    expect(result.state.countries!.FR.borderPolicy).toBe('closed');
   });
 
   it('responseLevel ramps faster in autocracies than democracies', () => {
     const state = baseState();
-    state.countries.US = { ...state.countries.US, detected: true, responseLevel: 0 };
-    state.countries.CN = { ...state.countries.CN, detected: true, responseLevel: 0 };
+    state.countries!.US = { ...state.countries!.US, detected: true, responseLevel: 0 };
+    state.countries!.CN = { ...state.countries!.CN, detected: true, responseLevel: 0 };
     const result = tickCountries(state);
-    expect(result.state.countries.CN.responseLevel).toBeGreaterThan(result.state.countries.US.responseLevel);
+    expect(result.state.countries!.CN.responseLevel).toBeGreaterThan(result.state.countries!.US.responseLevel);
   });
 
   it('border flux multiplier scales correctly', () => {
@@ -105,9 +105,9 @@ describe('countryDynamics', () => {
     const state = baseState();
     const cities = state.cities;
     Object.values(cities).find((c) => c.countryCode === 'BR')!.detected = true;
-    const agg = aggregateCountries(cities, state.countries, state.day);
+    const agg = aggregateCountries(cities, state.countries!, state.day);
     const next = { ...state, countries: agg };
     const result = tickCountries(next);
-    expect(result.state.countries.BR.detected).toBe(true);
+    expect(result.state.countries!.BR.detected).toBe(true);
   });
 });

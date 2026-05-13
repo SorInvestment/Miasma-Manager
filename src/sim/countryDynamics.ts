@@ -26,11 +26,12 @@ export interface CountryDynamicsResult {
 
 export function tickCountries(state: GameState): CountryDynamicsResult {
   const events: GameEvent[] = [];
-  const next: Record<string, typeof state.countries[string]> = {};
-  const collapsedCount = Object.values(state.countries).filter((c) => c.collapsed).length;
+  const countries = state.countries ?? {};
+  const next: Record<string, (typeof countries)[string]> = {};
+  const collapsedCount = Object.values(countries).filter((c) => c.collapsed).length;
 
-  for (const code of Object.keys(state.countries)) {
-    const country = state.countries[code];
+  for (const code of Object.keys(countries)) {
+    const country = countries[code];
     const totalAlive = country.S + country.E + country.I + country.R || 1;
     const infectedRatio = (country.E + country.I) / totalAlive;
     const deathRatio = country.D / Math.max(1, country.population);
@@ -147,7 +148,7 @@ export function getBorderFluxMultiplier(policy: BorderPolicy): number {
 }
 
 export function getLethalityMultiplier(state: GameState, countryCode: string): number {
-  const country = state.countries[countryCode];
+  const country = state.countries?.[countryCode];
   if (!country) return 1;
   return country.collapsed ? COLLAPSE_LETHALITY_MULT : 1;
 }

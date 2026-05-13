@@ -211,8 +211,8 @@ export interface GameState {
   day: number;
   speed: Speed;
   cities: Record<string, City>;
-  countries: Record<string, CountryState>;
-  selectedCountryCode: string | null;
+  countries?: Record<string, CountryState>;
+  selectedCountryCode?: string | null;
   pathogen: Pathogen;
   dnaPoints: number;
   budget: number;

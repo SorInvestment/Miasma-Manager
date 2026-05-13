@@ -110,7 +110,7 @@ const initialState: GameState = {
   cureFundingLevel: 0,
   cure: makeInitialCureState(),
   events: [],
-  phase: 'start',
+  phase: 'menu',
   selectedCityId: null,
   history: [],
   initialPopulation: totalWorldPopulation(),

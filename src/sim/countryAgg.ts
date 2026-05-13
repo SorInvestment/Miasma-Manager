@@ -66,5 +66,7 @@ export function topCountriesBy(
       (b.collapsed ? 1 : 0) - (a.collapsed ? 1 : 0) ||
       b.D - a.D,
   };
-  return Object.values(state.countries).sort(sorters[metric]).slice(0, limit);
+  return Object.values(state.countries ?? {})
+    .sort(sorters[metric])
+    .slice(0, limit);
 }
