@@ -9,7 +9,7 @@ const pathogen: Pathogen = {
   lethality: 0.05, severity: 1.0,
   climateTolerance: { arctic: 0.5, temperate: 1, tropical: 1, arid: 0.9 },
   drugResistance: 0,
-  mutations: new Set(),
+  mutations: new Set(), variants: [],
 };
 
 function makeCity(overrides: Partial<City> = {}): City {
@@ -21,7 +21,7 @@ function makeCity(overrides: Partial<City> = {}): City {
     ports: { air: [], sea: [], land: [] },
     detected: false, interventions: new Set(),
     healthcareCapacity: 0.008,
-    healthcareLoad: 0,
+    healthcareLoad: 0, strainState: {},
     ...overrides,
   };
 }
@@ -29,27 +29,27 @@ function makeCity(overrides: Partial<City> = {}): City {
 describe('healthcare', () => {
   it('capacity ratio < 1 yields no collapse multiplier', () => {
     const city = makeCity({ I: 1_000 });
-    const mult = healthcareCollapseMultiplier(city, pathogen);
+    const mult = healthcareCollapseMultiplier(city, pathogen.severity);
     expect(mult).toBe(1);
   });
 
   it('capacity ratio > 1 triggers collapse multiplier', () => {
     const city = makeCity({ I: 100_000 });
-    const mult = healthcareCollapseMultiplier(city, pathogen);
+    const mult = healthcareCollapseMultiplier(city, pathogen.severity);
     expect(mult).toBeGreaterThan(1);
   });
 
   it('collapse multiplier caps at 3.5x even under extreme load', () => {
     const city = makeCity({ I: 900_000, S: 100_000 });
-    const mult = healthcareCollapseMultiplier(city, pathogen);
+    const mult = healthcareCollapseMultiplier(city, pathogen.severity);
     expect(mult).toBeLessThanOrEqual(3.5);
   });
 
   it('healthcare-surge raises effective capacity, reducing collapse', () => {
     const overloaded = makeCity({ I: 30_000 });
     const surged = makeCity({ I: 30_000, interventions: new Set(['healthcare-surge']) });
-    const mNorm = healthcareCollapseMultiplier(overloaded, pathogen);
-    const mSurge = healthcareCollapseMultiplier(surged, pathogen);
+    const mNorm = healthcareCollapseMultiplier(overloaded, pathogen.severity);
+    const mSurge = healthcareCollapseMultiplier(surged, pathogen.severity);
     expect(mSurge).toBeLessThan(mNorm);
   });
 

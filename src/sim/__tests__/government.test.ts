@@ -10,7 +10,7 @@ const pathogen: Pathogen = {
   lethality: 0.05, severity: 1.0,
   climateTolerance: { arctic: 0.5, temperate: 1, tropical: 1, arid: 0.9 },
   drugResistance: 0,
-  mutations: new Set(),
+  mutations: new Set(), variants: [],
 };
 
 function makeCity(overrides: Partial<City> = {}): City {
@@ -22,7 +22,7 @@ function makeCity(overrides: Partial<City> = {}): City {
     ports: { air: [], sea: [], land: [] },
     detected: false, interventions: new Set(),
     healthcareCapacity: 0.008,
-    healthcareLoad: 0,
+    healthcareLoad: 0, strainState: {},
     ...overrides,
   };
 }

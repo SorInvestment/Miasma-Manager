@@ -16,7 +16,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     lethality: 0.04, severity: 0.5,
     climateTolerance: { arctic: 0.4, temperate: 1, tropical: 1, arid: 0.85 },
     drugResistance: 0,
-    mutations: new Set(),
+    mutations: new Set(), variants: [],
   };
   return {
     mode: 'pathogen', day: 0, speed: 1,

@@ -18,7 +18,7 @@ const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
     lethality: 0.02, severity: 0.5,
     climateTolerance: { arctic: 0.6, temperate: 1.0, tropical: 1.0, arid: 0.9 },
     drugResistance: 0,
-    mutations: new Set(),
+    mutations: new Set(), variants: [],
   },
   bacteria: {
     name: 'Bacteria', type: 'bacteria',
@@ -26,7 +26,7 @@ const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
     lethality: 0.04, severity: 0.6,
     climateTolerance: { arctic: 0.5, temperate: 0.9, tropical: 1.0, arid: 0.95 },
     drugResistance: 0.2,
-    mutations: new Set(),
+    mutations: new Set(), variants: [],
   },
   fungus: {
     name: 'Fungus', type: 'fungus',
@@ -34,7 +34,7 @@ const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
     lethality: 0.03, severity: 0.3,
     climateTolerance: { arctic: 0.3, temperate: 0.7, tropical: 1.0, arid: 0.6 },
     drugResistance: 0.4,
-    mutations: new Set(),
+    mutations: new Set(), variants: [],
   },
   parasite: {
     name: 'Parasite', type: 'parasite',
@@ -42,7 +42,7 @@ const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
     lethality: 0.025, severity: 0.4,
     climateTolerance: { arctic: 0.2, temperate: 0.7, tropical: 1.0, arid: 0.8 },
     drugResistance: 0.3,
-    mutations: new Set(),
+    mutations: new Set(), variants: [],
   },
   prion: {
     name: 'Prion', type: 'prion',
@@ -50,7 +50,7 @@ const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
     lethality: 0.95, severity: 0.55,
     climateTolerance: { arctic: 1.0, temperate: 1.0, tropical: 1.0, arid: 1.0 },
     drugResistance: 1.5,
-    mutations: new Set(),
+    mutations: new Set(), variants: [],
   },
   bioweapon: {
     name: 'Bioweapon', type: 'bioweapon',
@@ -58,7 +58,7 @@ const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
     lethality: 0.12, severity: 0.85,
     climateTolerance: { arctic: 0.95, temperate: 1.0, tropical: 1.0, arid: 0.95 },
     drugResistance: 0.6,
-    mutations: new Set(),
+    mutations: new Set(), variants: [],
   },
 };
 
@@ -172,7 +172,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const c = cities[cid];
       if (!c) continue;
       const seed = Math.min(50, c.S);
-      cities[cid] = { ...c, S: c.S - seed, I: c.I + seed };
+      const originComp = c.strainState.origin ?? { E: 0, I: 0, R: 0 };
+      cities[cid] = {
+        ...c,
+        S: c.S - seed,
+        I: c.I + seed,
+        strainState: { ...c.strainState, origin: { ...originComp, I: originComp.I + seed } },
+      };
     }
 
     if (mods.preDeadRatio) {
@@ -186,14 +192,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
       for (const id of Object.keys(cities)) {
         const c = cities[id];
         const infected = Math.round(c.S * mods.preInfected);
-        cities[id] = { ...c, S: c.S - infected, I: c.I + infected, detected: true };
+        const originComp = c.strainState.origin ?? { E: 0, I: 0, R: 0 };
+        cities[id] = {
+          ...c,
+          S: c.S - infected,
+          I: c.I + infected,
+          detected: true,
+          strainState: { ...c.strainState, origin: { ...originComp, I: originComp.I + infected } },
+        };
       }
     }
     if (mods.preRecovered) {
       for (const id of Object.keys(cities)) {
         const c = cities[id];
         const recovered = Math.round(c.S * mods.preRecovered);
-        cities[id] = { ...c, S: c.S - recovered, R: c.R + recovered };
+        const originComp = c.strainState.origin ?? { E: 0, I: 0, R: 0 };
+        cities[id] = {
+          ...c,
+          S: c.S - recovered,
+          R: c.R + recovered,
+          strainState: { ...c.strainState, origin: { ...originComp, R: originComp.R + recovered } },
+        };
       }
     }
     if (mods.healthcareOverloadMultiplier) {
@@ -208,7 +227,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...preset,
       name: opts.pathogenName?.trim() || preset.name,
       climateTolerance: { ...preset.climateTolerance },
-      mutations: new Set(),
+      mutations: new Set(), variants: [],
       ...(mods.pathogenOverrides ?? {}),
     };
     if (mods.pathogenOverrides?.climateTolerance) {

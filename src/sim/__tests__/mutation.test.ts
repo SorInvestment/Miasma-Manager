@@ -10,7 +10,7 @@ const basePathogen: Pathogen = {
   lethality: 0.05, severity: 0.5,
   climateTolerance: { arctic: 0.5, temperate: 1, tropical: 1, arid: 0.9 },
   drugResistance: 0,
-  mutations: new Set(),
+  mutations: new Set(), variants: [],
 };
 
 function makeState(overrides: Partial<GameState> = {}): GameState {

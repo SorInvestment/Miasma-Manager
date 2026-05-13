@@ -26,6 +26,12 @@ export interface CityPorts {
   land: string[];
 }
 
+export interface StrainCompartment {
+  E: number;
+  I: number;
+  R: number;
+}
+
 export interface City {
   id: string;
   name: string;
@@ -46,6 +52,22 @@ export interface City {
   interventions: Set<InterventionId>;
   healthcareCapacity: number;
   healthcareLoad: number;
+  strainState: Record<string, StrainCompartment>;
+}
+
+export interface Strain {
+  id: string;
+  name: string;
+  parentId: string | null;
+  mutations: Set<string>;
+  spawnedDay: number;
+  transmissibility: number;
+  incubation: number;
+  infectiousPeriod: number;
+  lethality: number;
+  severity: number;
+  drugResistance: number;
+  climateTolerance: Record<Climate, number>;
 }
 
 export interface Pathogen {
@@ -59,6 +81,7 @@ export interface Pathogen {
   climateTolerance: Record<Climate, number>;
   drugResistance: number;
   mutations: Set<string>;
+  variants: Strain[];
 }
 
 export type MutationCategory =

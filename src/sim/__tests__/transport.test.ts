@@ -11,7 +11,7 @@ function makeCity(id: string, overrides: Partial<City> = {}): City {
     ports: { air: [], sea: [], land: [] },
     detected: false, interventions: new Set(),
     healthcareCapacity: 0.008,
-    healthcareLoad: 0,
+    healthcareLoad: 0, strainState: {},
     ...overrides,
   };
 }
