@@ -10,6 +10,17 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'retain-on-failure',
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: 'http://localhost:5173',
+          localStorage: [
+            { name: 'miasma-tutorial-seen', value: 'v2' },
+          ],
+        },
+      ],
+    },
   },
   projects: [
     {

@@ -10,6 +10,7 @@ import { MutationTree } from './components/MutationTree';
 import { InterventionPanel } from './components/InterventionPanel';
 import { ChartsPanel } from './components/ChartsPanel';
 import { EndScreen } from './components/EndScreen';
+import { TutorialOverlay } from './components/TutorialOverlay';
 
 type Modal = 'mutations' | 'interventions' | 'charts' | null;
 
@@ -40,6 +41,7 @@ export default function App() {
       {modal === 'interventions' && <InterventionPanel onClose={() => setModal(null)} />}
       {modal === 'charts' && <ChartsPanel onClose={() => setModal(null)} />}
       {(phase === 'won' || phase === 'lost') && <EndScreen />}
+      <TutorialOverlay />
     </div>
   );
 }
