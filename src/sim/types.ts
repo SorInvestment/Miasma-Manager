@@ -4,6 +4,7 @@ export type GameMode = 'pathogen' | 'defender';
 export type Phase = 'start' | 'playing' | 'won' | 'lost';
 export type PathogenType = 'virus' | 'bacteria' | 'fungus';
 export type Speed = 0 | 1 | 2 | 3 | 5;
+export type Difficulty = 'casual' | 'normal' | 'hard' | 'brutal';
 
 export type InterventionId =
   | 'lockdown'
@@ -122,4 +123,5 @@ export interface GameState {
   autoPauseTriggers: Set<string>;
   compliance: number;
   globalInterventions: Set<InterventionId>;
+  difficulty: Difficulty;
 }

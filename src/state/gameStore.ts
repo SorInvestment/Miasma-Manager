@@ -6,6 +6,8 @@ import { buyMutation } from '../sim/mutation';
 import { deployIntervention, fundResearch } from '../sim/government';
 import { INTERVENTION_INDEX } from '../data/interventions';
 import { COMPLIANCE_INITIAL } from '../sim/compliance';
+import { getMultipliers } from '../sim/difficulty';
+import type { Difficulty } from '../sim/types';
 
 const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
   virus: {
@@ -34,8 +36,21 @@ const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
   },
 };
 
+interface StartGameOpts {
+  mode: GameMode;
+  pathogenType: PathogenType;
+  startCityId: string;
+  pathogenName?: string;
+  difficulty?: Difficulty;
+}
+
 interface StoreActions {
-  startGame: (mode: GameMode, pathogenType: PathogenType, startCityId: string, pathogenName?: string) => void;
+  startGame: (
+    modeOrOpts: GameMode | StartGameOpts,
+    pathogenType?: PathogenType,
+    startCityId?: string,
+    pathogenName?: string,
+  ) => void;
   setSpeed: (s: Speed) => void;
   togglePause: () => void;
   tickOnce: () => void;
@@ -45,6 +60,7 @@ interface StoreActions {
   fundResearchAction: (amount: number) => void;
   resetGame: () => void;
   clearAutoPause: (key: string) => void;
+  setDifficulty: (d: Difficulty) => void;
 }
 
 export type GameStore = GameState & StoreActions;
@@ -67,6 +83,7 @@ const initialState: GameState = {
   autoPauseTriggers: new Set(),
   compliance: COMPLIANCE_INITIAL,
   globalInterventions: new Set(),
+  difficulty: 'normal',
 };
 
 function checkAutoPause(prev: GameState, next: GameState): { triggers: string[]; nextTriggers: Set<string> } {
@@ -92,44 +109,56 @@ function checkAutoPause(prev: GameState, next: GameState): { triggers: string[];
 export const useGameStore = create<GameStore>((set, get) => ({
   ...initialState,
 
-  startGame: (mode, pathogenType, startCityId, pathogenName) => {
+  startGame: (modeOrOpts, pathogenType, startCityId, pathogenName) => {
+    const opts: StartGameOpts =
+      typeof modeOrOpts === 'string'
+        ? {
+            mode: modeOrOpts,
+            pathogenType: pathogenType as PathogenType,
+            startCityId: startCityId as string,
+            pathogenName,
+          }
+        : modeOrOpts;
+    const difficulty: Difficulty = opts.difficulty ?? get().difficulty ?? 'normal';
+    const mults = getMultipliers(difficulty);
     const cities = makeCitiesIndex();
-    const startCity = cities[startCityId];
+    const startCity = cities[opts.startCityId];
     if (startCity) {
       const seed = Math.min(50, startCity.S);
-      cities[startCityId] = { ...startCity, S: startCity.S - seed, I: seed };
+      cities[opts.startCityId] = { ...startCity, S: startCity.S - seed, I: seed };
     }
-    const preset = PATHOGEN_PRESETS[pathogenType];
+    const preset = PATHOGEN_PRESETS[opts.pathogenType];
     const pathogen: Pathogen = {
       ...preset,
-      name: pathogenName?.trim() || preset.name,
+      name: opts.pathogenName?.trim() || preset.name,
       climateTolerance: { ...preset.climateTolerance },
       mutations: new Set(),
     };
     set({
-      mode,
+      mode: opts.mode,
       day: 0,
       speed: 1,
       cities,
       pathogen,
-      dnaPoints: mode === 'pathogen' ? 4 : 0,
-      budget: mode === 'defender' ? 10 : 0,
+      dnaPoints: opts.mode === 'pathogen' ? Math.round(4 * mults.startResources) : 0,
+      budget: opts.mode === 'defender' ? Math.round(10 * mults.startResources) : 0,
       cureProgress: 0,
       cureFundingLevel: 0,
       events: [
         {
           day: 0,
-          text: `Outbreak began in ${startCity?.name ?? startCityId}`,
+          text: `Outbreak began in ${startCity?.name ?? opts.startCityId}`,
           kind: 'system',
         },
       ],
       phase: 'playing',
-      selectedCityId: startCityId,
+      selectedCityId: opts.startCityId,
       history: [],
       initialPopulation: totalWorldPopulation(),
       autoPauseTriggers: new Set(),
       compliance: COMPLIANCE_INITIAL,
       globalInterventions: new Set(),
+      difficulty,
     });
   },
 
@@ -177,6 +206,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     next.delete(key);
     return { autoPauseTriggers: next };
   }),
+
+  setDifficulty: (d) => set({ difficulty: d }),
 }));
 
 export { PATHOGEN_PRESETS };

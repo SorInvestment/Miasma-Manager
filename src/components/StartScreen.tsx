@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useGameStore } from '../state/gameStore';
 import { CITIES_LIST } from '../data/cities';
-import type { GameMode, PathogenType } from '../sim/types';
+import type { Difficulty, GameMode, PathogenType } from '../sim/types';
+import { DIFFICULTY_LIST, DIFFICULTY_LABELS, DIFFICULTY_BLURBS } from '../sim/difficulty';
 
 const MODES: { id: GameMode; title: string; sub: string; description: string }[] = [
   {
@@ -30,6 +31,7 @@ export function StartScreen() {
   const [pathogenType, setPathogenType] = useState<PathogenType>('virus');
   const [startCityId, setStartCityId] = useState<string>('lon');
   const [pathogenName, setPathogenName] = useState<string>('');
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
 
   return (
     <div className="flex h-screen items-center justify-center overflow-auto bg-gradient-to-b from-ink-900 via-plague-900 to-ink-900 p-6">
@@ -122,9 +124,33 @@ export function StartScreen() {
           </div>
         </section>
 
+        <section className="mb-6">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-ink-300">Difficulty</h2>
+          <div className="grid grid-cols-4 gap-2">
+            {DIFFICULTY_LIST.map((d) => {
+              const active = difficulty === d;
+              return (
+                <button
+                  key={d}
+                  data-testid={`difficulty-${d}`}
+                  onClick={() => setDifficulty(d)}
+                  className={`rounded-md border p-2 text-left transition ${
+                    active
+                      ? 'border-plague-500 bg-plague-900/40 ring-2 ring-plague-500/50'
+                      : 'border-ink-600 bg-ink-700/50 hover:border-ink-500'
+                  }`}
+                >
+                  <div className="font-mono text-sm font-bold">{DIFFICULTY_LABELS[d]}</div>
+                  <p className="mt-0.5 text-[10px] text-ink-300 leading-tight">{DIFFICULTY_BLURBS[d]}</p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         <button
           data-testid="start-button"
-          onClick={() => startGame(mode, pathogenType, startCityId, pathogenName)}
+          onClick={() => startGame({ mode, pathogenType, startCityId, pathogenName, difficulty })}
           className="w-full rounded-md bg-plague-500 px-4 py-3 font-mono text-lg font-bold text-ink-900 transition hover:bg-plague-300 active:scale-[0.99]"
         >
           BEGIN OUTBREAK

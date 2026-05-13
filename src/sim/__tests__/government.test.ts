@@ -35,6 +35,7 @@ function makeState(cities: Record<string, City>, overrides: Partial<GameState> =
     history: [], initialPopulation: 1_000_000, autoPauseTriggers: new Set(),
     compliance: 0.85,
     globalInterventions: new Set(),
+    difficulty: 'normal',
     ...overrides,
   };
 }

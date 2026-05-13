@@ -25,6 +25,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     history: [], initialPopulation: total, autoPauseTriggers: new Set(),
     compliance: 0.85,
     globalInterventions: new Set(),
+    difficulty: 'normal',
     ...overrides,
   };
 }

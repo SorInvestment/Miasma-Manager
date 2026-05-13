@@ -5,15 +5,17 @@ import {
   PASSIVE_CURE_RATE,
 } from './constants';
 import { adjustCompliance, LOCKDOWN_DEPLOY_PENALTY, PUBLIC_INFO_BONUS } from './compliance';
+import { getMultipliers } from './difficulty';
 
 export function updateDetection(state: GameState): { state: GameState; newDetections: string[] } {
   const newDetections: string[] = [];
   const nextCities: Record<string, City> = { ...state.cities };
+  const mults = getMultipliers(state.difficulty);
   for (const city of Object.values(state.cities)) {
     if (city.detected) continue;
     const N = city.S + city.E + city.I + city.R;
     if (N <= 0) continue;
-    const threshold = DETECTION_THRESHOLD * (4 - city.wealth);
+    const threshold = (DETECTION_THRESHOLD * (4 - city.wealth)) / Math.max(0.1, mults.detection);
     const severityBoost = Math.max(0.4, state.pathogen.severity);
     if (city.I / N > threshold / severityBoost) {
       nextCities[city.id] = { ...city, detected: true };
@@ -48,7 +50,8 @@ export function progressCure(state: GameState): GameState {
   const funded = state.mode === 'defender' ? BASE_CURE_RATE * state.cureFundingLevel * wealthSum : 0;
   const autoFunded = state.mode === 'pathogen' ? BASE_CURE_RATE * wealthSum * 0.7 : 0;
   const drugRes = 1 + state.pathogen.drugResistance;
-  const delta = (passive + funded + autoFunded) / drugRes;
+  const mults = getMultipliers(state.difficulty);
+  const delta = ((passive + funded + autoFunded) / drugRes) * mults.cureRate;
   const nextProgress = Math.min(1, state.cureProgress + delta);
   return { ...state, cureProgress: nextProgress };
 }
@@ -89,7 +92,9 @@ export function aiPathogenModeInterventions(state: GameState): GameState {
 }
 
 export function deployIntervention(state: GameState, interventionId: InterventionId, cityId: string | null, cost: number): GameState {
-  if (state.budget < cost) return state;
+  const mults = getMultipliers(state.difficulty);
+  const effectiveCost = cost * mults.interventionCost;
+  if (state.budget < effectiveCost) return state;
   const evt: GameEvent = {
     day: state.day,
     text: cityId
@@ -103,7 +108,7 @@ export function deployIntervention(state: GameState, interventionId: Interventio
     globals.add(interventionId);
     let next: GameState = {
       ...state,
-      budget: state.budget - cost,
+      budget: state.budget - effectiveCost,
       globalInterventions: globals,
       events: [...state.events, evt],
     };
@@ -119,7 +124,7 @@ export function deployIntervention(state: GameState, interventionId: Interventio
   ints.add(interventionId);
   let next: GameState = {
     ...state,
-    budget: state.budget - cost,
+    budget: state.budget - effectiveCost,
     cities: { ...state.cities, [cityId]: { ...city, interventions: ints } },
     events: [...state.events, evt],
   };

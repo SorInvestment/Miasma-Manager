@@ -4,6 +4,7 @@ import { computeTransfers, applyTransfers } from './transport';
 import { updateDetection, progressCure, aiPathogenModeInterventions } from './government';
 import { applyMutationEffect, pickAIMutation } from './mutation';
 import { applyComplianceTickDelta } from './compliance';
+import { getMultipliers } from './difficulty';
 import {
   DNA_PER_NEW_INFECTION,
   DNA_NEW_COUNTRY_BONUS,
@@ -104,7 +105,9 @@ export function tick(state: GameState): GameState {
     budget += BUDGET_PER_DAY_BASE + BUDGET_PER_HEALTHY_BILLION * healthyBillions;
   }
 
-  if (nextState.mode === 'defender' && (state.day + 1) % PATHOGEN_AI_MUTATE_INTERVAL === 0) {
+  const diffMults = getMultipliers(nextState.difficulty);
+  const aiMutateInterval = Math.max(4, Math.round(PATHOGEN_AI_MUTATE_INTERVAL * diffMults.aiMutate));
+  if (nextState.mode === 'defender' && (state.day + 1) % aiMutateInterval === 0) {
     const m = pickAIMutation(nextState.pathogen);
     if (m) {
       nextState.pathogen = applyMutationEffect(nextState.pathogen, m);

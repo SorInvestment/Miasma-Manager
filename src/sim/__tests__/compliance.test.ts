@@ -44,6 +44,7 @@ function makeState(cities: Record<string, City>, overrides: Partial<GameState> =
     events: [], phase: 'playing', selectedCityId: null,
     history: [], initialPopulation: 1_000_000, autoPauseTriggers: new Set(),
     compliance: COMPLIANCE_INITIAL, globalInterventions: new Set(),
+    difficulty: 'normal',
     ...overrides,
   };
 }
