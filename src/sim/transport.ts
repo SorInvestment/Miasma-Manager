@@ -32,7 +32,11 @@ function strainIRecord(city: City): Record<string, number> {
   return out;
 }
 
-export function computeTransfers(cities: Record<string, City>, globalTravelBans: Set<InterventionId>): TransportTransfer[] {
+export function computeTransfers(
+  cities: Record<string, City>,
+  globalTravelBans: Set<InterventionId>,
+  borderFluxByCountry: (code: string) => number = () => 1,
+): TransportTransfer[] {
   const transfers: TransportTransfer[] = [];
   for (const from of Object.values(cities)) {
     if (from.I <= 0) continue;
@@ -50,8 +54,12 @@ export function computeTransfers(cities: Record<string, City>, globalTravelBans:
         if (!to) continue;
         const toBan = to.interventions.has(banId);
         const banMult = fromBan || toBan || globalBan ? TRAVEL_BAN_FLUX_MULT : 1;
+        const borderMult =
+          from.countryCode === to.countryCode
+            ? 1
+            : Math.min(borderFluxByCountry(from.countryCode), borderFluxByCountry(to.countryCode));
         const flux = Math.min(from.population, to.population) / 1_000_000;
-        const movers = baseRate * flux * banMult * 1_000_000;
+        const movers = baseRate * flux * banMult * borderMult * 1_000_000;
         const totalInfectedMovers = Math.min(from.I, movers * infectiousFraction);
         if (totalInfectedMovers <= 0.0001) continue;
         for (const [strainId, strainICount] of Object.entries(strainI)) {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, GameMode, PathogenType, Pathogen, Speed, InterventionId } from '../sim/types';
+import type { GameState, GameMode, PathogenType, Pathogen, Phase, Speed, InterventionId } from '../sim/types';
 import { makeCitiesIndex, totalWorldPopulation } from '../data/cities';
 import { tick } from '../sim/engine';
 import { buyMutation } from '../sim/mutation';
@@ -9,6 +9,7 @@ import { INTERVENTION_INDEX } from '../data/interventions';
 import { COMPLIANCE_INITIAL } from '../sim/compliance';
 import { getMultipliers } from '../sim/difficulty';
 import { SCENARIO_INDEX, defaultScenarioFor, type Scenario } from '../sim/scenarios';
+import { makeCountriesIndex } from '../sim/country';
 import type { CureStageId, Difficulty, WinCondition } from '../sim/types';
 
 const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
@@ -82,6 +83,8 @@ interface StoreActions {
   togglePause: () => void;
   tickOnce: () => void;
   selectCity: (id: string | null) => void;
+  selectCountry: (code: string | null) => void;
+  goToPhase: (phase: Phase) => void;
   buyMutationAction: (mutationId: string) => void;
   deployInterventionAction: (interventionId: InterventionId, cityId: string | null) => void;
   fundResearchAction: (amount: number) => void;
@@ -98,6 +101,8 @@ const initialState: GameState = {
   day: 0,
   speed: 0,
   cities: makeCitiesIndex(),
+  countries: makeCountriesIndex(),
+  selectedCountryCode: null,
   pathogen: PATHOGEN_PRESETS.virus,
   dnaPoints: 4,
   budget: 10,
@@ -277,6 +282,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       day: mods.startDay ?? 0,
       speed: 1,
       cities,
+      countries: makeCountriesIndex(),
+      selectedCountryCode: null,
       pathogen,
       dnaPoints,
       budget,
@@ -355,7 +362,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set(next);
   },
 
-  resetGame: () => set({ ...initialState, cities: makeCitiesIndex(), autoPauseTriggers: new Set(), globalInterventions: new Set(), lockedInterventions: new Set() }),
+  resetGame: () => set({ ...initialState, cities: makeCitiesIndex(), countries: makeCountriesIndex(), selectedCountryCode: null, autoPauseTriggers: new Set(), globalInterventions: new Set(), lockedInterventions: new Set() }),
+
+  selectCountry: (code) => set({ selectedCountryCode: code }),
+
+  goToPhase: (phase) => set({ phase }),
 
   clearAutoPause: (key) => set((state) => {
     const next = new Set(state.autoPauseTriggers);

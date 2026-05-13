@@ -9,6 +9,8 @@ import { MUTATIONS } from '../data/mutations';
 import { getMultipliers } from './difficulty';
 import { applyExpiry, applyVaccineRollout, isAntiviralActive } from './interventions';
 import { tryFireRandomEvent } from './events';
+import { aggregateCountries } from './countryAgg';
+import { tickCountries, getBorderFluxMultiplier } from './countryDynamics';
 import {
   DNA_PER_NEW_INFECTION,
   DNA_NEW_COUNTRY_BONUS,
@@ -68,7 +70,11 @@ export function tick(state: GameState): GameState {
   }
 
   const globalTravelBans = new Set<InterventionId>();
-  const transfers = computeTransfers(nextCities, globalTravelBans);
+  const borderFluxLookup = (code: string): number => {
+    const country = stateAfterExpiry.countries?.[code];
+    return country ? getBorderFluxMultiplier(country.borderPolicy) : 1;
+  };
+  const transfers = computeTransfers(nextCities, globalTravelBans, borderFluxLookup);
   nextCities = applyTransfers(nextCities, transfers);
 
   let nextState: GameState = { ...stateAfterExpiry, cities: nextCities };
@@ -93,6 +99,17 @@ export function tick(state: GameState): GameState {
 
   const newInfections = newInfectionsThisTick(state.cities, nextState.cities);
   const newDeaths = newDeathsThisTick(state.cities, nextState.cities);
+
+  const newDay = state.day + 1;
+  if (nextState.countries) {
+    const nextCountries = aggregateCountries(nextState.cities, nextState.countries, newDay);
+    nextState = { ...nextState, countries: nextCountries };
+    const dynamicsResult = tickCountries(nextState);
+    nextState = dynamicsResult.state;
+    if (dynamicsResult.events.length > 0) {
+      nextState = { ...nextState, events: [...nextState.events, ...dynamicsResult.events] };
+    }
+  }
 
   const totals = globalTotals(nextState.cities);
   const point: HistoryPoint = {
@@ -164,7 +181,6 @@ export function tick(state: GameState): GameState {
   }
 
   const deathLimit = nextState.scenarioDeathLimit > 0 ? nextState.scenarioDeathLimit : DEFENDER_DEATH_LIMIT_RATIO;
-  const newDay = state.day + 1;
 
   let phase = nextState.phase;
   if (nextState.mode === 'pathogen') {
