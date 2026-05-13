@@ -18,7 +18,16 @@ export type InterventionId =
   | 'travel-ban-sea'
   | 'travel-ban-land'
   | 'healthcare-surge'
-  | 'public-info';
+  | 'public-info'
+  | 'mask-mandate'
+  | 'contact-tracing'
+  | 'school-closure'
+  | 'quarantine-facility'
+  | 'vaccine-rollout-1'
+  | 'vaccine-rollout-2'
+  | 'antiviral-stockpile'
+  | 'who-emergency-funding'
+  | 'targeted-district-lockdown';
 
 export interface CityPorts {
   air: string[];
@@ -183,4 +192,6 @@ export interface GameState {
   containedDays: number;
   scenarioCureMultiplier: number;
   scenarioDeathLimit: number;
+  globalInterventionExpiry: Record<string, number>;
+  cityInterventionExpiry: Record<string, Record<string, number>>;
 }

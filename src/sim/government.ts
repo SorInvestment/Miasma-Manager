@@ -2,6 +2,12 @@ import type { City, GameState, GameEvent, InterventionId } from './types';
 import { DETECTION_THRESHOLD } from './constants';
 import { adjustCompliance, LOCKDOWN_DEPLOY_PENALTY, PUBLIC_INFO_BONUS } from './compliance';
 import { getMultipliers } from './difficulty';
+import {
+  applyWhoEmergencyFunding,
+  contactTracingAllowed,
+  setInterventionExpiry,
+  vaccineRolloutPrereqMet,
+} from './interventions';
 export { progressCure, fundResearch } from './cure';
 
 export function updateDetection(state: GameState): { state: GameState; newDetections: string[] } {
@@ -72,6 +78,10 @@ export function aiPathogenModeInterventions(state: GameState): GameState {
 }
 
 export function deployIntervention(state: GameState, interventionId: InterventionId, cityId: string | null, cost: number): GameState {
+  if (state.lockedInterventions.has(interventionId)) return state;
+  if (interventionId === 'vaccine-rollout-1' || interventionId === 'vaccine-rollout-2') {
+    if (!vaccineRolloutPrereqMet(state, interventionId)) return state;
+  }
   const mults = getMultipliers(state.difficulty);
   const effectiveCost = cost * mults.interventionCost;
   if (state.budget < effectiveCost) return state;
@@ -95,11 +105,16 @@ export function deployIntervention(state: GameState, interventionId: Interventio
     if (interventionId === 'public-info') {
       next = adjustCompliance(next, PUBLIC_INFO_BONUS);
     }
+    if (interventionId === 'who-emergency-funding') {
+      next = applyWhoEmergencyFunding(next);
+    }
+    next = setInterventionExpiry(next, 'global', interventionId, null);
     return next;
   }
   const city = state.cities[cityId];
   if (!city) return state;
   if (city.interventions.has(interventionId)) return state;
+  if (interventionId === 'contact-tracing' && !contactTracingAllowed(city)) return state;
   const ints = new Set(city.interventions);
   ints.add(interventionId);
   let next: GameState = {
@@ -108,9 +123,10 @@ export function deployIntervention(state: GameState, interventionId: Interventio
     cities: { ...state.cities, [cityId]: { ...city, interventions: ints } },
     events: [...state.events, evt],
   };
-  if (interventionId === 'lockdown') {
+  if (interventionId === 'lockdown' || interventionId === 'mask-mandate' || interventionId === 'school-closure') {
     next = adjustCompliance(next, -LOCKDOWN_DEPLOY_PENALTY);
   }
+  next = setInterventionExpiry(next, 'city', interventionId, cityId);
   return next;
 }
 

@@ -7,6 +7,7 @@ import { applyMutationEffect, pickAIMutation } from './mutation';
 import { applyComplianceTickDelta, adjustCompliance } from './compliance';
 import { MUTATIONS } from '../data/mutations';
 import { getMultipliers } from './difficulty';
+import { applyExpiry, applyVaccineRollout, isAntiviralActive } from './interventions';
 import {
   DNA_PER_NEW_INFECTION,
   DNA_NEW_COUNTRY_BONUS,
@@ -50,20 +51,27 @@ function newDeathsThisTick(prev: Record<string, City>, next: Record<string, City
 export function tick(state: GameState): GameState {
   if (state.phase !== 'playing') return state;
 
+  const stateAfterExpiry = applyExpiry(state);
+
   let nextCities: Record<string, City> = {};
-  const publicInfoActive = state.globalInterventions.has('public-info');
-  for (const city of Object.values(state.cities)) {
-    nextCities[city.id] = tickCity(city, state.pathogen, {
-      publicInfoActive,
-      compliance: state.compliance,
-    });
+  const publicInfoActive = stateAfterExpiry.globalInterventions.has('public-info');
+  const antiviralActive = isAntiviralActive(stateAfterExpiry);
+  const seirMods = {
+    publicInfoActive,
+    compliance: stateAfterExpiry.compliance,
+    globalInterventions: stateAfterExpiry.globalInterventions,
+    antiviralActive,
+  };
+  for (const city of Object.values(stateAfterExpiry.cities)) {
+    nextCities[city.id] = tickCity(city, stateAfterExpiry.pathogen, seirMods);
   }
 
   const globalTravelBans = new Set<InterventionId>();
   const transfers = computeTransfers(nextCities, globalTravelBans);
   nextCities = applyTransfers(nextCities, transfers);
 
-  let nextState: GameState = { ...state, cities: nextCities };
+  let nextState: GameState = { ...stateAfterExpiry, cities: nextCities };
+  nextState = applyVaccineRollout(nextState);
 
   const detectionResult = updateDetection(nextState);
   nextState = detectionResult.state;

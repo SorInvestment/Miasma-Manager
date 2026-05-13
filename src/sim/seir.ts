@@ -1,4 +1,4 @@
-import type { City, Pathogen, Strain, StrainCompartment } from './types';
+import type { City, InterventionId, Pathogen, Strain, StrainCompartment } from './types';
 import { LOCKDOWN_BETA_MULT, PUBLIC_INFO_GLOBAL_BETA_MULT } from './constants';
 import { lockdownEffectMultiplier, COMPLIANCE_MAX } from './compliance';
 import {
@@ -11,6 +11,36 @@ import {
 export interface SEIRMods {
   publicInfoActive: boolean;
   compliance?: number;
+  globalInterventions?: Set<InterventionId>;
+  antiviralActive?: boolean;
+}
+
+const MASK_MANDATE_BETA = 0.7;
+const SCHOOL_CLOSURE_BETA = 0.85;
+const TARGETED_DISTRICT_LOCKDOWN_BETA = 0.5;
+const VACCINE_PHASE2_BETA = 0.85;
+const CONTACT_TRACING_REDUCTION = 0.3;
+const QUARANTINE_FACILITY_REMOVAL = 0.002;
+const ANTIVIRAL_LETHALITY_MULT = 0.7;
+const TARGETED_LOCKDOWN_HOT_THRESHOLD = 0.02;
+
+function cityBetaMultipliers(city: City, mods: SEIRMods): number {
+  const compliance = mods.compliance ?? COMPLIANCE_MAX;
+  let mult = 1;
+  if (city.interventions.has('lockdown')) {
+    mult *= lockdownEffectMultiplier(LOCKDOWN_BETA_MULT, compliance);
+  }
+  if (city.interventions.has('mask-mandate')) mult *= MASK_MANDATE_BETA;
+  if (city.interventions.has('school-closure')) mult *= SCHOOL_CLOSURE_BETA;
+  if (city.interventions.has('targeted-district-lockdown')) {
+    const N = city.S + city.E + city.I + city.R;
+    if (N > 0 && city.I / N > TARGETED_LOCKDOWN_HOT_THRESHOLD) {
+      mult *= TARGETED_DISTRICT_LOCKDOWN_BETA;
+    }
+  }
+  if (mods.publicInfoActive) mult *= PUBLIC_INFO_GLOBAL_BETA_MULT;
+  if (mods.globalInterventions?.has('vaccine-rollout-2')) mult *= VACCINE_PHASE2_BETA;
+  return mult;
 }
 
 export function effectiveBeta(
@@ -19,12 +49,8 @@ export function effectiveBeta(
   mods: SEIRMods,
 ): number {
   const climateMod = pOrStrain.climateTolerance[city.climate];
-  const compliance = mods.compliance ?? COMPLIANCE_MAX;
-  const lockdownMod = city.interventions.has('lockdown')
-    ? lockdownEffectMultiplier(LOCKDOWN_BETA_MULT, compliance)
-    : 1;
-  const publicInfoMod = mods.publicInfoActive ? PUBLIC_INFO_GLOBAL_BETA_MULT : 1;
-  return Math.max(0, pOrStrain.transmissibility * climateMod * lockdownMod * publicInfoMod);
+  const mult = cityBetaMultipliers(city, mods);
+  return Math.max(0, pOrStrain.transmissibility * climateMod * mult);
 }
 
 export function healthcareCollapseMultiplier(city: City, severity: number): number {
@@ -86,6 +112,8 @@ export function tickCity(
   }
 
   const collapseMult = healthcareCollapseMultiplier({ ...city, I: city.I }, pathogen.severity);
+  const antiviralMult = mods.antiviralActive ? ANTIVIRAL_LETHALITY_MULT : 1;
+  const contactTracing = city.interventions.has('contact-tracing') && city.wealth >= 2;
 
   const N = N0;
   const demands: number[] = activeEntries.map(({ strain, comp }) => {
@@ -101,11 +129,12 @@ export function tickCity(
   for (let i = 0; i < activeEntries.length; i++) {
     const entry = activeEntries[i];
     const { strain, comp } = entry;
-    const newE = Math.min(nextS, demands[i] * scale);
+    const rawNewE = Math.min(nextS, demands[i] * scale);
+    const newE = contactTracing ? rawNewE * (1 - CONTACT_TRACING_REDUCTION) : rawNewE;
     const sigma = 1 / Math.max(0.5, strain.incubation);
     const gamma = 1 / Math.max(0.5, strain.infectiousPeriod);
     const baseMu = Math.max(0, Math.min(1, strain.lethality));
-    const mu = Math.min(1, baseMu * collapseMult);
+    const mu = Math.min(1, baseMu * collapseMult * antiviralMult);
     const newI = Math.min(comp.E, sigma * comp.E);
     const outI = Math.min(comp.I, gamma * comp.I);
     const died = outI * mu;
@@ -116,8 +145,22 @@ export function tickCity(
       R: comp.R + recovered,
     };
     strainState[entry.id] = nextComp;
-    nextS = Math.max(0, nextS - newE);
+    nextS = Math.max(0, nextS - rawNewE);
     nextD += died;
+  }
+
+  if (city.interventions.has('quarantine-facility')) {
+    let totalRemoved = 0;
+    const isolated = QUARANTINE_FACILITY_REMOVAL;
+    for (const id of Object.keys(strainState)) {
+      const c = strainState[id];
+      const remove = c.I * isolated;
+      if (remove > 0) {
+        strainState[id] = { ...c, I: Math.max(0, c.I - remove), R: c.R + remove };
+        totalRemoved += remove;
+      }
+    }
+    void totalRemoved;
   }
 
   let totalE = 0, totalI = 0, totalR = 0;

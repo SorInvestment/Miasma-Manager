@@ -120,6 +120,8 @@ const initialState: GameState = {
   containedDays: 0,
   scenarioCureMultiplier: 1,
   scenarioDeathLimit: 0,
+  globalInterventionExpiry: {},
+  cityInterventionExpiry: {},
 };
 
 function checkAutoPause(prev: GameState, next: GameState): { triggers: string[]; nextTriggers: Set<string> } {
@@ -305,6 +307,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       containedDays: 0,
       scenarioCureMultiplier: mods.cureRateMultiplier ?? 1,
       scenarioDeathLimit: mods.deathLimitRatio ?? 0,
+      globalInterventionExpiry: {},
+      cityInterventionExpiry: {},
     });
   },
 

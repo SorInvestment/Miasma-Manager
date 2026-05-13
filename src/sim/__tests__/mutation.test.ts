@@ -39,7 +39,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     lockedInterventions: new Set(),
     containedDays: 0,
     scenarioCureMultiplier: 1,
-    scenarioDeathLimit: 0,
+    scenarioDeathLimit: 0, globalInterventionExpiry: {}, cityInterventionExpiry: {},
     ...overrides,
   };
 }
