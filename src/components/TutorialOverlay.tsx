@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useGameStore } from '../state/gameStore';
+import { useSettingsStore } from '../state/settingsStore';
 
-const STORAGE_KEY = 'miasma-tutorial-seen';
-const TUTORIAL_VERSION = 'v2';
+const LEGACY_STORAGE_KEY = 'miasma-tutorial-seen';
 
 interface Step {
   title: string;
@@ -12,36 +13,65 @@ const STEPS: Step[] = [
   {
     title: 'Welcome to Miasma Manager',
     body:
-      'The clock at the top advances days. Use the speed buttons (1×–5×) to set the pace, or pause with ⏸. Your goal depends on your side: as the Pathogen, kill enough to topple humanity before the cure ships. As the Defender, ship the cure (or contain spread) before the death limit.',
+      'The clock at the top advances days. Use the speed buttons (1×–5×) to set the pace, or pause with ⏸. A typical game runs 15–25 minutes at 1×. Press the ☰ button (top right) or Esc for the in-game menu.',
+  },
+  {
+    title: 'The world: cities and countries',
+    body:
+      'The map shows ~180 major metros across ~196 countries. Cities are SEIR units; countries aggregate them. Each country has wealth, healthcare capacity, government type, drug-resistance — visible in the country panel on the right.',
   },
   {
     title: 'Mutations and the strain tree',
     body:
-      'Pathogen mode: spend DNA to unlock mutations across five branches — Transmission, Symptoms, Abilities, Evasion, and Lethality. Evasion mutations spawn new strains that compete for hosts and can roll back vaccine progress. Watch your strains in the SidePanel.',
+      'Pathogen mode: spend DNA on five branches — Transmission, Symptoms, Abilities, Evasion, Lethality. Evasion mutations can fork new strains that compete for hosts and roll back the cure.',
   },
   {
-    title: 'The 4-stage cure & compliance',
+    title: 'Cure, compliance, panic',
     body:
-      'The top bar shows four segments: Sequencing → Vaccine R&D → Trials → Distribution. Each stage advances based on different inputs and can be funded by the defender. The yellow Comply bar tracks public compliance — too many lockdowns or hostile mutations drop it, and lockdowns get weaker when low.',
+      'Top bar shows the 4-stage cure (Sequencing → Vaccine R&D → Trials → Distribution). The Comply bar tracks public compliance. Each country has its own panic level and can collapse when healthcare runs out — collapsed countries get a red pulsing ring on the map.',
+  },
+  {
+    title: 'News & borders',
+    body:
+      'The news ticker (just below the top bar) scrolls country-tagged events: outbreaks, border closures, mass graves. Authoritarian countries auto-close borders fast; democracies wait for panic to rise. Closed borders dampen international spread.',
   },
 ];
 
 export function TutorialOverlay() {
+  const phase = useGameStore((s) => s.phase);
+  const tutorialSeen = useSettingsStore((s) => s.tutorialSeen);
+  const setTutorialSeen = useSettingsStore((s) => s.setTutorialSeen);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const seen = window.localStorage?.getItem(STORAGE_KEY);
-    if (seen !== TUTORIAL_VERSION) setOpen(true);
-  }, []);
+    const legacy = window.localStorage?.getItem(LEGACY_STORAGE_KEY);
+    if (legacy && !tutorialSeen) {
+      setTutorialSeen(true);
+      try {
+        window.localStorage?.removeItem(LEGACY_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [tutorialSeen, setTutorialSeen]);
+
+  useEffect(() => {
+    if (phase !== 'playing') {
+      setOpen(false);
+      return;
+    }
+    if (!tutorialSeen) {
+      setOpen(true);
+      setStep(0);
+    }
+  }, [phase, tutorialSeen]);
 
   if (!open) return null;
 
-  function dismiss(remember: boolean) {
-    if (remember && typeof window !== 'undefined') {
-      window.localStorage?.setItem(STORAGE_KEY, TUTORIAL_VERSION);
-    }
+  function dismiss() {
+    setTutorialSeen(true);
     setOpen(false);
   }
 
@@ -62,7 +92,7 @@ export function TutorialOverlay() {
         <div className="flex items-center justify-between">
           <button
             data-testid="tutorial-skip"
-            onClick={() => dismiss(true)}
+            onClick={dismiss}
             className="rounded border border-ink-600 px-3 py-1.5 text-xs text-ink-300 hover:bg-ink-700"
           >
             Skip
@@ -78,7 +108,7 @@ export function TutorialOverlay() {
             )}
             <button
               data-testid="tutorial-next"
-              onClick={() => (last ? dismiss(true) : setStep(step + 1))}
+              onClick={() => (last ? dismiss() : setStep(step + 1))}
               className="rounded bg-plague-500 px-4 py-1.5 text-sm font-bold text-ink-900 hover:bg-plague-300"
             >
               {last ? 'Begin' : 'Next'}

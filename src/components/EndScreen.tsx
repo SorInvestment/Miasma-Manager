@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '../state/gameStore';
+import { useScoresStore } from '../state/scoresStore';
 import { SCENARIO_INDEX } from '../sim/scenarios';
 import { DIFFICULTY_LABELS } from '../sim/difficulty';
 import type { City } from '../sim/types';
@@ -41,9 +43,13 @@ export function EndScreen() {
   const cureProgress = useGameStore((s) => s.cureProgress);
   const pathogen = useGameStore((s) => s.pathogen);
   const reset = useGameStore((s) => s.resetGame);
+  const goToPhase = useGameStore((s) => s.goToPhase);
   const scenarioId = useGameStore((s) => s.scenarioId);
   const difficulty = useGameStore((s) => s.difficulty);
   const initialPopulation = useGameStore((s) => s.initialPopulation);
+  const recordRun = useScoresStore((s) => s.recordRun);
+  const containedDays = useGameStore((s) => s.containedDays);
+  const recordedRef = useRef(false);
 
   let dead = 0, recovered = 0;
   let detected = 0;
@@ -54,6 +60,22 @@ export function EndScreen() {
 
   const scenarioName = SCENARIO_INDEX[scenarioId]?.name ?? 'Sandbox';
   const won = phase === 'won';
+
+  useEffect(() => {
+    if (recordedRef.current) return;
+    if (phase === 'won' || phase === 'lost') {
+      recordRun({
+        scenarioId,
+        difficulty,
+        won: phase === 'won',
+        completedDay: day,
+        killPercent: Math.min(100, (dead / Math.max(1, initialPopulation)) * 100),
+        containedDays,
+        deaths: dead,
+      });
+      recordedRef.current = true;
+    }
+  }, [phase, scenarioId, difficulty, day, dead, initialPopulation, containedDays, recordRun]);
   const headline =
     mode === 'pathogen'
       ? won
@@ -102,13 +124,25 @@ export function EndScreen() {
             </span>
           ))}
         </div>
-        <button
-          data-testid="restart-button"
-          onClick={reset}
-          className="rounded-md bg-plague-500 px-6 py-2 font-mono font-bold text-ink-900 hover:bg-plague-300"
-        >
-          Play Again
-        </button>
+        <div className="flex gap-2">
+          <button
+            data-testid="restart-button"
+            onClick={reset}
+            className="flex-1 rounded-md bg-plague-500 px-6 py-2 font-mono font-bold text-ink-900 hover:bg-plague-300"
+          >
+            Play Again
+          </button>
+          <button
+            data-testid="main-menu-button"
+            onClick={() => {
+              reset();
+              goToPhase('menu');
+            }}
+            className="flex-1 rounded-md border border-ink-600 bg-ink-700 px-6 py-2 font-mono font-bold text-ink-100 hover:bg-ink-600"
+          >
+            Main Menu
+          </button>
+        </div>
       </div>
     </div>
   );
