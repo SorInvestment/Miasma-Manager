@@ -4,6 +4,7 @@ import {
   BASE_CURE_RATE,
   PASSIVE_CURE_RATE,
 } from './constants';
+import { adjustCompliance, LOCKDOWN_DEPLOY_PENALTY, PUBLIC_INFO_BONUS } from './compliance';
 
 export function updateDetection(state: GameState): { state: GameState; newDetections: string[] } {
   const newDetections: string[] = [];
@@ -56,12 +57,14 @@ export function aiPathogenModeInterventions(state: GameState): GameState {
   if (state.mode !== 'pathogen') return state;
   const nextCities: Record<string, City> = { ...state.cities };
   let changed = false;
+  let newLockdowns = 0;
   for (const city of Object.values(state.cities)) {
     const N = city.S + city.E + city.I + city.R;
     if (N <= 0) continue;
     const infectionRatio = city.I / N;
     const ints = new Set(city.interventions);
     const before = ints.size;
+    const hadLockdown = ints.has('lockdown');
     if (city.detected && infectionRatio > 0.03 && !ints.has('lockdown')) {
       ints.add('lockdown');
     }
@@ -74,9 +77,15 @@ export function aiPathogenModeInterventions(state: GameState): GameState {
     if (ints.size !== before) {
       nextCities[city.id] = { ...city, interventions: ints };
       changed = true;
+      if (!hadLockdown && ints.has('lockdown')) newLockdowns++;
     }
   }
-  return changed ? { ...state, cities: nextCities } : state;
+  if (!changed) return state;
+  let next: GameState = { ...state, cities: nextCities };
+  if (newLockdowns > 0) {
+    next = adjustCompliance(next, -LOCKDOWN_DEPLOY_PENALTY * newLockdowns);
+  }
+  return next;
 }
 
 export function deployIntervention(state: GameState, interventionId: InterventionId, cityId: string | null, cost: number): GameState {
@@ -89,23 +98,35 @@ export function deployIntervention(state: GameState, interventionId: Interventio
     kind: 'intervention',
   };
   if (!cityId) {
-    return {
+    const globals = new Set(state.globalInterventions);
+    if (globals.has(interventionId)) return state;
+    globals.add(interventionId);
+    let next: GameState = {
       ...state,
       budget: state.budget - cost,
+      globalInterventions: globals,
       events: [...state.events, evt],
     };
+    if (interventionId === 'public-info') {
+      next = adjustCompliance(next, PUBLIC_INFO_BONUS);
+    }
+    return next;
   }
   const city = state.cities[cityId];
   if (!city) return state;
   if (city.interventions.has(interventionId)) return state;
   const ints = new Set(city.interventions);
   ints.add(interventionId);
-  return {
+  let next: GameState = {
     ...state,
     budget: state.budget - cost,
     cities: { ...state.cities, [cityId]: { ...city, interventions: ints } },
     events: [...state.events, evt],
   };
+  if (interventionId === 'lockdown') {
+    next = adjustCompliance(next, -LOCKDOWN_DEPLOY_PENALTY);
+  }
+  return next;
 }
 
 export function fundResearch(state: GameState, amount: number): GameState {

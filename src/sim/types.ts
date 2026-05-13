@@ -120,4 +120,6 @@ export interface GameState {
   history: HistoryPoint[];
   initialPopulation: number;
   autoPauseTriggers: Set<string>;
+  compliance: number;
+  globalInterventions: Set<InterventionId>;
 }

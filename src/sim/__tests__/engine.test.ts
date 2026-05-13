@@ -23,6 +23,8 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     dnaPoints: 5, budget: 0, cureProgress: 0, cureFundingLevel: 0,
     events: [], phase: 'playing', selectedCityId: null,
     history: [], initialPopulation: total, autoPauseTriggers: new Set(),
+    compliance: 0.85,
+    globalInterventions: new Set(),
     ...overrides,
   };
 }

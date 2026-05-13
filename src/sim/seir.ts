@@ -1,13 +1,18 @@
 import type { City, Pathogen } from './types';
 import { LOCKDOWN_BETA_MULT, PUBLIC_INFO_GLOBAL_BETA_MULT } from './constants';
+import { lockdownEffectMultiplier, COMPLIANCE_MAX } from './compliance';
 
 export interface SEIRMods {
   publicInfoActive: boolean;
+  compliance?: number;
 }
 
 export function effectiveBeta(city: City, p: Pathogen, mods: SEIRMods): number {
   const climateMod = p.climateTolerance[city.climate];
-  const lockdownMod = city.interventions.has('lockdown') ? LOCKDOWN_BETA_MULT : 1;
+  const compliance = mods.compliance ?? COMPLIANCE_MAX;
+  const lockdownMod = city.interventions.has('lockdown')
+    ? lockdownEffectMultiplier(LOCKDOWN_BETA_MULT, compliance)
+    : 1;
   const publicInfoMod = mods.publicInfoActive ? PUBLIC_INFO_GLOBAL_BETA_MULT : 1;
   return Math.max(0, p.transmissibility * climateMod * lockdownMod * publicInfoMod);
 }

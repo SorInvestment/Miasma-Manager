@@ -24,6 +24,7 @@ export function TopBar(_props: Props) {
   const pathogenName = useGameStore((s) => s.pathogen.name);
   const setSpeed = useGameStore((s) => s.setSpeed);
   const cities = useGameStore((s) => s.cities);
+  const compliance = useGameStore((s) => s.compliance);
 
   let infected = 0, dead = 0;
   for (const c of Object.values(cities)) {
@@ -83,6 +84,19 @@ export function TopBar(_props: Props) {
         <div className="flex items-center gap-2 text-ink-300">
           <span>Dead</span>
           <span className="font-bold text-plague-500" data-testid="dead-count">{formatNumber(dead)}</span>
+        </div>
+        <div className="flex items-center gap-2" title="Public compliance — affects lockdown strength">
+          <span className="text-ink-300">Comply</span>
+          <div className="h-3 w-20 overflow-hidden rounded bg-ink-700">
+            <div
+              className="h-full bg-gradient-to-r from-amber-400 to-amber-300 transition-all"
+              style={{ width: `${compliance * 100}%` }}
+              data-testid="compliance-bar"
+            />
+          </div>
+          <span className="text-xs tabular-nums text-amber-300">
+            {(compliance * 100).toFixed(0)}%
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-ink-300">Cure</span>

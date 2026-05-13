@@ -3,6 +3,7 @@ import { tickCity } from './seir';
 import { computeTransfers, applyTransfers } from './transport';
 import { updateDetection, progressCure, aiPathogenModeInterventions } from './government';
 import { applyMutationEffect, pickAIMutation } from './mutation';
+import { applyComplianceTickDelta } from './compliance';
 import {
   DNA_PER_NEW_INFECTION,
   DNA_NEW_COUNTRY_BONUS,
@@ -47,9 +48,12 @@ export function tick(state: GameState): GameState {
   if (state.phase !== 'playing') return state;
 
   let nextCities: Record<string, City> = {};
-  const publicInfoActive = false;
+  const publicInfoActive = state.globalInterventions.has('public-info');
   for (const city of Object.values(state.cities)) {
-    nextCities[city.id] = tickCity(city, state.pathogen, { publicInfoActive });
+    nextCities[city.id] = tickCity(city, state.pathogen, {
+      publicInfoActive,
+      compliance: state.compliance,
+    });
   }
 
   const globalTravelBans = new Set<InterventionId>();
@@ -63,6 +67,7 @@ export function tick(state: GameState): GameState {
 
   nextState = aiPathogenModeInterventions(nextState);
   nextState = progressCure(nextState);
+  nextState = applyComplianceTickDelta(nextState);
 
   const newInfections = newInfectionsThisTick(state.cities, nextState.cities);
   const newDeaths = newDeathsThisTick(state.cities, nextState.cities);

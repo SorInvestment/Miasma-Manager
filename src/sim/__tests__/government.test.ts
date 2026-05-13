@@ -33,6 +33,8 @@ function makeState(cities: Record<string, City>, overrides: Partial<GameState> =
     dnaPoints: 0, budget: 100, cureProgress: 0, cureFundingLevel: 0,
     events: [], phase: 'playing', selectedCityId: null,
     history: [], initialPopulation: 1_000_000, autoPauseTriggers: new Set(),
+    compliance: 0.85,
+    globalInterventions: new Set(),
     ...overrides,
   };
 }

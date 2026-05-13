@@ -5,6 +5,7 @@ import { tick } from '../sim/engine';
 import { buyMutation } from '../sim/mutation';
 import { deployIntervention, fundResearch } from '../sim/government';
 import { INTERVENTION_INDEX } from '../data/interventions';
+import { COMPLIANCE_INITIAL } from '../sim/compliance';
 
 const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
   virus: {
@@ -64,6 +65,8 @@ const initialState: GameState = {
   history: [],
   initialPopulation: totalWorldPopulation(),
   autoPauseTriggers: new Set(),
+  compliance: COMPLIANCE_INITIAL,
+  globalInterventions: new Set(),
 };
 
 function checkAutoPause(prev: GameState, next: GameState): { triggers: string[]; nextTriggers: Set<string> } {
@@ -125,6 +128,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       history: [],
       initialPopulation: totalWorldPopulation(),
       autoPauseTriggers: new Set(),
+      compliance: COMPLIANCE_INITIAL,
+      globalInterventions: new Set(),
     });
   },
 
@@ -165,7 +170,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set(next);
   },
 
-  resetGame: () => set({ ...initialState, cities: makeCitiesIndex(), autoPauseTriggers: new Set() }),
+  resetGame: () => set({ ...initialState, cities: makeCitiesIndex(), autoPauseTriggers: new Set(), globalInterventions: new Set() }),
 
   clearAutoPause: (key) => set((state) => {
     const next = new Set(state.autoPauseTriggers);
