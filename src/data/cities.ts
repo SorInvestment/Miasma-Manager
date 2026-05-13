@@ -143,6 +143,8 @@ export const CITIES_LIST: City[] = seeds.map((s) => ({
   ports: { air: s.air, sea: s.sea, land: s.land },
   detected: false,
   interventions: new Set(),
+  healthcareCapacity: 0.002 * s.wealth * s.wealth,
+  healthcareLoad: 0,
 }));
 
 export function makeCitiesIndex(): Record<string, City> {

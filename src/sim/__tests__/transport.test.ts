@@ -10,6 +10,8 @@ function makeCity(id: string, overrides: Partial<City> = {}): City {
     climate: 'temperate', wealth: 2,
     ports: { air: [], sea: [], land: [] },
     detected: false, interventions: new Set(),
+    healthcareCapacity: 0.008,
+    healthcareLoad: 0,
     ...overrides,
   };
 }

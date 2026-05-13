@@ -37,6 +37,8 @@ export interface City {
   ports: CityPorts;
   detected: boolean;
   interventions: Set<InterventionId>;
+  healthcareCapacity: number;
+  healthcareLoad: number;
 }
 
 export interface Pathogen {

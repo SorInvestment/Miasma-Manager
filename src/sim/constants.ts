@@ -23,7 +23,6 @@ export const PATHOGEN_AI_MUTATE_INTERVAL = 28;
 export const DEFENDER_DEATH_LIMIT_RATIO = 0.06;
 
 export const LOCKDOWN_BETA_MULT = 0.22;
-export const HEALTHCARE_LETHALITY_MULT = 0.45;
 export const PUBLIC_INFO_GLOBAL_BETA_MULT = 0.78;
 
 export const TRAVEL_BAN_FLUX_MULT = 0.08;
