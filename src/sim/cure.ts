@@ -23,17 +23,17 @@ export const CURE_STAGE_BLURBS: Record<CureStageId, string> = {
 };
 
 const STAGE_RATE = {
-  sequencing: 0.00010,
-  'vaccine-rd': 0.00006,
-  trials: 0.00009,
-  distribution: 0.00008,
+  sequencing: 0.000042,
+  'vaccine-rd': 0.000025,
+  trials: 0.000038,
+  distribution: 0.000034,
 } as const;
 
 const FUNDING_DIVISORS = {
-  sequencing: 30,
-  'vaccine-rd': 40,
-  trials: 25,
-  distribution: 35,
+  sequencing: 51,
+  'vaccine-rd': 68,
+  trials: 43,
+  distribution: 60,
 } as const;
 
 export function makeInitialCureState(): CureState {

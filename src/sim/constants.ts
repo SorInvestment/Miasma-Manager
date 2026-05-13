@@ -1,4 +1,6 @@
-export const TICK_MS_PER_DAY_AT_1X = 600;
+export const TICK_MS_PER_DAY_AT_1X = 1200;
+
+export const EXPECTED_DAYS_PER_RUN_NORMAL = 720;
 
 export const TRANSPORT_FLUX = {
   air: 0.0011,
@@ -8,17 +10,17 @@ export const TRANSPORT_FLUX = {
 
 export const DETECTION_THRESHOLD = 0.0006;
 
-export const BASE_CURE_RATE = 0.00009;
-export const PASSIVE_CURE_RATE = 0.000022;
+export const BASE_CURE_RATE = 0.000038;
+export const PASSIVE_CURE_RATE = 0.0000095;
 
-export const DNA_PER_NEW_INFECTION = 0.0000028;
-export const DNA_NEW_COUNTRY_BONUS = 3;
+export const DNA_PER_NEW_INFECTION = 0.0000014;
+export const DNA_NEW_COUNTRY_BONUS = 2;
 export const DNA_FIRST_DEATH_BONUS = 2;
 
 export const BUDGET_PER_DAY_BASE = 0.45;
 export const BUDGET_PER_HEALTHY_BILLION = 0.85;
 
-export const PATHOGEN_AI_MUTATE_INTERVAL = 28;
+export const PATHOGEN_AI_MUTATE_INTERVAL = 48;
 
 export const DEFENDER_DEATH_LIMIT_RATIO = 0.06;
 

@@ -16,6 +16,8 @@ export function useGameLoop() {
       if (phase === 'playing' && speed > 0) {
         accRef.current += dt * speed;
         const msPerDay = TICK_MS_PER_DAY_AT_1X;
+        const maxAcc = msPerDay * 4;
+        if (accRef.current > maxAcc) accRef.current = maxAcc;
         while (accRef.current >= msPerDay) {
           accRef.current -= msPerDay;
           tickOnce();
