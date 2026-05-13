@@ -1,5 +1,6 @@
 import { useGameStore } from '../state/gameStore';
 import type { Speed } from '../sim/types';
+import { CURE_STAGE_ORDER, CURE_STAGE_LABELS } from '../sim/cure';
 
 const SPEEDS: Speed[] = [0, 1, 2, 3, 5];
 
@@ -20,6 +21,7 @@ export function TopBar(_props: Props) {
   const mode = useGameStore((s) => s.mode);
   const dnaPoints = useGameStore((s) => s.dnaPoints);
   const budget = useGameStore((s) => s.budget);
+  const cure = useGameStore((s) => s.cure);
   const cureProgress = useGameStore((s) => s.cureProgress);
   const pathogenName = useGameStore((s) => s.pathogen.name);
   const setSpeed = useGameStore((s) => s.setSpeed);
@@ -98,17 +100,31 @@ export function TopBar(_props: Props) {
             {(compliance * 100).toFixed(0)}%
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-testid="cure-stages">
           <span className="text-ink-300">Cure</span>
-          <div className="h-3 w-32 overflow-hidden rounded bg-ink-700">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-300 transition-all"
-              style={{ width: `${cureProgress * 100}%` }}
-              data-testid="cure-bar"
-            />
+          <div className="flex gap-0.5" role="group" aria-label="Cure stages">
+            {CURE_STAGE_ORDER.map((id) => {
+              const stage = cure.stages[id];
+              const active = cure.activeStageId === id && stage.progress < 1;
+              return (
+                <div
+                  key={id}
+                  title={`${CURE_STAGE_LABELS[id]}: ${(stage.progress * 100).toFixed(0)}%`}
+                  className={`h-3 w-8 overflow-hidden rounded-sm border ${
+                    active ? 'border-emerald-300 shadow-[0_0_4px_rgba(110,231,183,0.6)]' : 'border-ink-600'
+                  } bg-ink-700`}
+                  data-testid={`cure-stage-${id}`}
+                >
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-400 to-emerald-300 transition-all"
+                    style={{ width: `${stage.progress * 100}%` }}
+                  />
+                </div>
+              );
+            })}
           </div>
-          <span className="text-xs tabular-nums text-emerald-300">
-            {(cureProgress * 100).toFixed(1)}%
+          <span className="text-xs tabular-nums text-emerald-300" data-testid="cure-bar">
+            {(cureProgress * 100).toFixed(0)}%
           </span>
         </div>
       </div>

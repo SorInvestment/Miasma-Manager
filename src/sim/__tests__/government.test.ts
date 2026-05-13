@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { updateDetection, progressCure, anyDetected, deployIntervention, fundResearch } from '../government';
+import { makeInitialCureState } from '../cure';
 import type { City, GameState, Pathogen } from '../types';
 
 const pathogen: Pathogen = {
@@ -30,7 +31,7 @@ function makeState(cities: Record<string, City>, overrides: Partial<GameState> =
   return {
     mode: 'pathogen', day: 0, speed: 1,
     cities, pathogen,
-    dnaPoints: 0, budget: 100, cureProgress: 0, cureFundingLevel: 0,
+    dnaPoints: 0, budget: 100, cureProgress: 0, cureFundingLevel: 0, cure: makeInitialCureState(),
     events: [], phase: 'playing', selectedCityId: null,
     history: [], initialPopulation: 1_000_000, autoPauseTriggers: new Set(),
     compliance: 0.85,

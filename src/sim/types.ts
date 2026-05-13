@@ -105,6 +105,21 @@ export interface HistoryPoint {
   cure: number;
 }
 
+export type CureStageId = 'sequencing' | 'vaccine-rd' | 'trials' | 'distribution';
+
+export interface CureStage {
+  id: CureStageId;
+  progress: number;
+  funding: number;
+  unlocked: boolean;
+}
+
+export interface CureState {
+  stages: Record<CureStageId, CureStage>;
+  activeStageId: CureStageId;
+  overall: number;
+}
+
 export interface GameState {
   mode: GameMode;
   day: number;
@@ -115,6 +130,7 @@ export interface GameState {
   budget: number;
   cureProgress: number;
   cureFundingLevel: number;
+  cure: CureState;
   events: GameEvent[];
   phase: Phase;
   selectedCityId: string | null;

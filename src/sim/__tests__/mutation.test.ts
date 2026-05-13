@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { applyMutationEffect, buyMutation, canAfford, prereqsMet, getMutationById } from '../mutation';
+import { makeInitialCureState } from '../cure';
 import type { GameState, Pathogen } from '../types';
 
 const basePathogen: Pathogen = {
@@ -28,6 +29,9 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     history: [],
     initialPopulation: 1_000_000,
     autoPauseTriggers: new Set(),
+    compliance: 0.85,
+    globalInterventions: new Set(),
+    difficulty: 'normal',
     ...overrides,
   };
 }

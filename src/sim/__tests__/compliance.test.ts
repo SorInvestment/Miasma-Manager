@@ -11,6 +11,7 @@ import {
 } from '../compliance';
 import { effectiveBeta } from '../seir';
 import { deployIntervention } from '../government';
+import { makeInitialCureState } from '../cure';
 import { LOCKDOWN_BETA_MULT } from '../constants';
 import type { City, GameState, Pathogen } from '../types';
 
@@ -40,7 +41,7 @@ function makeCity(overrides: Partial<City> = {}): City {
 function makeState(cities: Record<string, City>, overrides: Partial<GameState> = {}): GameState {
   return {
     mode: 'defender', day: 0, speed: 1, cities, pathogen,
-    dnaPoints: 0, budget: 100, cureProgress: 0, cureFundingLevel: 0,
+    dnaPoints: 0, budget: 100, cureProgress: 0, cureFundingLevel: 0, cure: makeInitialCureState(),
     events: [], phase: 'playing', selectedCityId: null,
     history: [], initialPopulation: 1_000_000, autoPauseTriggers: new Set(),
     compliance: COMPLIANCE_INITIAL, globalInterventions: new Set(),

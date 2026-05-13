@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tick } from '../engine';
 import { makeCitiesIndex, totalWorldPopulation } from '../../data/cities';
+import { makeInitialCureState } from '../cure';
 import type { GameState, Pathogen } from '../types';
 
 function makeState(overrides: Partial<GameState> = {}): GameState {
@@ -20,7 +21,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
   return {
     mode: 'pathogen', day: 0, speed: 1,
     cities, pathogen,
-    dnaPoints: 5, budget: 0, cureProgress: 0, cureFundingLevel: 0,
+    dnaPoints: 5, budget: 0, cureProgress: 0, cureFundingLevel: 0, cure: makeInitialCureState(),
     events: [], phase: 'playing', selectedCityId: null,
     history: [], initialPopulation: total, autoPauseTriggers: new Set(),
     compliance: 0.85,

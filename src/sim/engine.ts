@@ -1,7 +1,8 @@
 import type { City, GameState, GameEvent, HistoryPoint, InterventionId } from './types';
 import { tickCity } from './seir';
 import { computeTransfers, applyTransfers } from './transport';
-import { updateDetection, progressCure, aiPathogenModeInterventions } from './government';
+import { updateDetection, aiPathogenModeInterventions } from './government';
+import { progressCureStages } from './cure';
 import { applyMutationEffect, pickAIMutation } from './mutation';
 import { applyComplianceTickDelta } from './compliance';
 import { getMultipliers } from './difficulty';
@@ -67,7 +68,7 @@ export function tick(state: GameState): GameState {
   nextState = detectionResult.state;
 
   nextState = aiPathogenModeInterventions(nextState);
-  nextState = progressCure(nextState);
+  nextState = progressCureStages(nextState);
   nextState = applyComplianceTickDelta(nextState);
 
   const newInfections = newInfectionsThisTick(state.cities, nextState.cities);

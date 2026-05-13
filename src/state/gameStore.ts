@@ -3,11 +3,12 @@ import type { GameState, GameMode, PathogenType, Pathogen, Speed, InterventionId
 import { makeCitiesIndex, totalWorldPopulation } from '../data/cities';
 import { tick } from '../sim/engine';
 import { buyMutation } from '../sim/mutation';
-import { deployIntervention, fundResearch } from '../sim/government';
+import { deployIntervention } from '../sim/government';
+import { fundResearch, fundStage, makeInitialCureState } from '../sim/cure';
 import { INTERVENTION_INDEX } from '../data/interventions';
 import { COMPLIANCE_INITIAL } from '../sim/compliance';
 import { getMultipliers } from '../sim/difficulty';
-import type { Difficulty } from '../sim/types';
+import type { CureStageId, Difficulty } from '../sim/types';
 
 const PATHOGEN_PRESETS: Record<PathogenType, Pathogen> = {
   virus: {
@@ -58,6 +59,7 @@ interface StoreActions {
   buyMutationAction: (mutationId: string) => void;
   deployInterventionAction: (interventionId: InterventionId, cityId: string | null) => void;
   fundResearchAction: (amount: number) => void;
+  fundStageAction: (stageId: CureStageId, amount: number) => void;
   resetGame: () => void;
   clearAutoPause: (key: string) => void;
   setDifficulty: (d: Difficulty) => void;
@@ -75,6 +77,7 @@ const initialState: GameState = {
   budget: 10,
   cureProgress: 0,
   cureFundingLevel: 0,
+  cure: makeInitialCureState(),
   events: [],
   phase: 'start',
   selectedCityId: null,
@@ -144,6 +147,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       budget: opts.mode === 'defender' ? Math.round(10 * mults.startResources) : 0,
       cureProgress: 0,
       cureFundingLevel: 0,
+      cure: makeInitialCureState(),
       events: [
         {
           day: 0,
@@ -196,6 +200,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   fundResearchAction: (amount) => {
     const prev = get();
     const next = fundResearch(prev, amount);
+    set(next);
+  },
+
+  fundStageAction: (stageId, amount) => {
+    const prev = get();
+    const next = fundStage(prev, stageId, amount);
     set(next);
   },
 

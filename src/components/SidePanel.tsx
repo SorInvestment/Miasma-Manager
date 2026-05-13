@@ -1,4 +1,5 @@
 import { useGameStore } from '../state/gameStore';
+import { CURE_STAGE_ORDER, CURE_STAGE_LABELS } from '../sim/cure';
 
 interface Props {
   onOpenMutations: () => void;
@@ -18,9 +19,9 @@ export function SidePanel({ onOpenMutations, onOpenInterventions, onOpenCharts }
   const mode = useGameStore((s) => s.mode);
   const selectedId = useGameStore((s) => s.selectedCityId);
   const pathogen = useGameStore((s) => s.pathogen);
-  const fundResearch = useGameStore((s) => s.fundResearchAction);
+  const fundStageAction = useGameStore((s) => s.fundStageAction);
   const budget = useGameStore((s) => s.budget);
-  const cureFundingLevel = useGameStore((s) => s.cureFundingLevel);
+  const cure = useGameStore((s) => s.cure);
 
   let S = 0, E = 0, I = 0, R = 0, D = 0;
   let detected = 0;
@@ -99,20 +100,36 @@ export function SidePanel({ onOpenMutations, onOpenInterventions, onOpenCharts }
               Deploy Interventions
             </button>
             <div className="rounded-md border border-ink-700 bg-ink-700/40 p-3">
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-300">Fund Research</h3>
-              <p className="mb-2 text-xs text-ink-300">Funding level: {cureFundingLevel.toFixed(0)}</p>
-              <div className="flex gap-2">
-                {[5, 10, 20].map((amt) => (
-                  <button
-                    key={amt}
-                    data-testid={`fund-${amt}`}
-                    disabled={budget < amt}
-                    onClick={() => fundResearch(amt)}
-                    className="flex-1 rounded bg-emerald-500 px-2 py-1 text-xs font-bold text-ink-900 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-30"
-                  >
-                    +${amt}M
-                  </button>
-                ))}
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-300">Fund Cure Stages</h3>
+              <div className="flex flex-col gap-2">
+                {CURE_STAGE_ORDER.map((id) => {
+                  const stage = cure.stages[id];
+                  const isActive = cure.activeStageId === id && stage.progress < 1;
+                  return (
+                    <div key={id} className={`rounded border p-2 ${isActive ? 'border-emerald-400/60 bg-emerald-900/10' : 'border-ink-600'}`}>
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-xs font-bold text-ink-100">{CURE_STAGE_LABELS[id]}</span>
+                        <span className="text-xs tabular-nums text-emerald-300">{(stage.progress * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="mb-1 h-1.5 overflow-hidden rounded bg-ink-800">
+                        <div className="h-full bg-emerald-400" style={{ width: `${stage.progress * 100}%` }} />
+                      </div>
+                      <div className="flex gap-1">
+                        {[5, 10, 20].map((amt) => (
+                          <button
+                            key={amt}
+                            data-testid={`fund-${id}-${amt}`}
+                            disabled={budget < amt || !stage.unlocked || stage.progress >= 1}
+                            onClick={() => fundStageAction(id, amt)}
+                            className="flex-1 rounded bg-emerald-500 px-1 py-0.5 text-[10px] font-bold text-ink-900 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-30"
+                          >
+                            +${amt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </>

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { DIFFICULTY, getMultipliers, DIFFICULTY_LIST } from '../difficulty';
 import { progressCure, deployIntervention } from '../government';
+import { makeInitialCureState } from '../cure';
 import type { City, GameState, Pathogen } from '../types';
 
 const pathogen: Pathogen = {
@@ -31,7 +32,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     mode: 'defender', day: 0, speed: 1,
     cities: { a: makeCity() },
     pathogen,
-    dnaPoints: 0, budget: 100, cureProgress: 0.5, cureFundingLevel: 0,
+    dnaPoints: 0, budget: 100, cureProgress: 0, cureFundingLevel: 0, cure: makeInitialCureState(),
     events: [], phase: 'playing', selectedCityId: null,
     history: [], initialPopulation: 1_000_000, autoPauseTriggers: new Set(),
     compliance: 0.85, globalInterventions: new Set(),
@@ -57,9 +58,7 @@ describe('difficulty', () => {
   it('progressCure applies cureRate multiplier', () => {
     const stNormal = progressCure(makeState({ difficulty: 'normal' }));
     const stBrutal = progressCure(makeState({ difficulty: 'brutal' }));
-    const deltaNormal = stNormal.cureProgress - 0.5;
-    const deltaBrutal = stBrutal.cureProgress - 0.5;
-    expect(deltaBrutal).toBeGreaterThan(deltaNormal);
+    expect(stBrutal.cureProgress).toBeGreaterThan(stNormal.cureProgress);
   });
 
   it('intervention cost scales with difficulty', () => {

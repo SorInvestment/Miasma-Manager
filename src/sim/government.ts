@@ -1,11 +1,8 @@
 import type { City, GameState, GameEvent, InterventionId } from './types';
-import {
-  DETECTION_THRESHOLD,
-  BASE_CURE_RATE,
-  PASSIVE_CURE_RATE,
-} from './constants';
+import { DETECTION_THRESHOLD } from './constants';
 import { adjustCompliance, LOCKDOWN_DEPLOY_PENALTY, PUBLIC_INFO_BONUS } from './compliance';
 import { getMultipliers } from './difficulty';
+export { progressCure, fundResearch } from './cure';
 
 export function updateDetection(state: GameState): { state: GameState; newDetections: string[] } {
   const newDetections: string[] = [];
@@ -37,23 +34,6 @@ export function updateDetection(state: GameState): { state: GameState; newDetect
 export function anyDetected(state: GameState): boolean {
   for (const c of Object.values(state.cities)) if (c.detected) return true;
   return false;
-}
-
-export function progressCure(state: GameState): GameState {
-  if (state.cureProgress >= 1) return state;
-  if (!anyDetected(state)) return state;
-  const wealthSum = Object.values(state.cities).reduce(
-    (acc, c) => (c.detected ? acc + c.wealth * (c.S / c.population) : acc),
-    0,
-  );
-  const passive = PASSIVE_CURE_RATE * wealthSum;
-  const funded = state.mode === 'defender' ? BASE_CURE_RATE * state.cureFundingLevel * wealthSum : 0;
-  const autoFunded = state.mode === 'pathogen' ? BASE_CURE_RATE * wealthSum * 0.7 : 0;
-  const drugRes = 1 + state.pathogen.drugResistance;
-  const mults = getMultipliers(state.difficulty);
-  const delta = ((passive + funded + autoFunded) / drugRes) * mults.cureRate;
-  const nextProgress = Math.min(1, state.cureProgress + delta);
-  return { ...state, cureProgress: nextProgress };
 }
 
 export function aiPathogenModeInterventions(state: GameState): GameState {
@@ -134,15 +114,3 @@ export function deployIntervention(state: GameState, interventionId: Interventio
   return next;
 }
 
-export function fundResearch(state: GameState, amount: number): GameState {
-  if (state.budget < amount) return state;
-  return {
-    ...state,
-    budget: state.budget - amount,
-    cureFundingLevel: state.cureFundingLevel + amount,
-    events: [
-      ...state.events,
-      { day: state.day, text: `Funded cure research (+${amount})`, kind: 'cure' },
-    ],
-  };
-}
