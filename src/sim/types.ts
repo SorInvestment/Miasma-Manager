@@ -1,7 +1,48 @@
 export type Climate = 'arctic' | 'temperate' | 'tropical' | 'arid';
 export type Wealth = 1 | 2 | 3;
 export type GameMode = 'pathogen' | 'defender';
-export type Phase = 'start' | 'playing' | 'won' | 'lost';
+export type Phase = 'menu' | 'scenarios' | 'settings' | 'start' | 'playing' | 'won' | 'lost';
+export type Region = 'NA' | 'SA' | 'EU' | 'AF' | 'AS' | 'OC';
+export type GovernmentType =
+  | 'democracy'
+  | 'autocracy'
+  | 'theocracy'
+  | 'failed-state'
+  | 'federation'
+  | 'monarchy';
+export type BorderPolicy = 'open' | 'normal' | 'screened' | 'closed';
+
+export interface Country {
+  code: string;
+  name: string;
+  region: Region;
+  population: number;
+  ruralPopulation: number;
+  wealth: Wealth;
+  climate: Climate;
+  healthcareCapacity: number;
+  governmentType: GovernmentType;
+  baseCompliance: number;
+  drugResistance: number;
+  flagEmoji: string;
+}
+
+export interface CountryState extends Country {
+  S: number;
+  E: number;
+  I: number;
+  R: number;
+  D: number;
+  infectedCities: number;
+  detected: boolean;
+  borderPolicy: BorderPolicy;
+  collapsed: boolean;
+  panicLevel: number;
+  responseLevel: number;
+  firstDetectedDay: number | null;
+  collapsedDay: number | null;
+  bordersClosedDay: number | null;
+}
 export type PathogenType = 'virus' | 'bacteria' | 'fungus' | 'parasite' | 'prion' | 'bioweapon';
 export type Speed = 0 | 1 | 2 | 3 | 5;
 export type Difficulty = 'casual' | 'normal' | 'hard' | 'brutal';
