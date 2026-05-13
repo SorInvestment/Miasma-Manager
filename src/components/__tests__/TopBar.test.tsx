@@ -11,7 +11,7 @@ beforeEach(() => {
 describe('TopBar', () => {
   it('renders speed buttons', () => {
     render(<TopBar />);
-    [0, 1, 2, 5, 10].forEach((s) => {
+    [0, 1, 2, 3, 5].forEach((s) => {
       expect(screen.getByTestId(`speed-${s}`)).toBeInTheDocument();
     });
   });

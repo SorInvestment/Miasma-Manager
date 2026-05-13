@@ -3,7 +3,7 @@ export type Wealth = 1 | 2 | 3;
 export type GameMode = 'pathogen' | 'defender';
 export type Phase = 'start' | 'playing' | 'won' | 'lost';
 export type PathogenType = 'virus' | 'bacteria' | 'fungus';
-export type Speed = 0 | 1 | 2 | 5 | 10;
+export type Speed = 0 | 1 | 2 | 3 | 5;
 
 export type InterventionId =
   | 'lockdown'

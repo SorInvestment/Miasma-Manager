@@ -1,7 +1,7 @@
 import { useGameStore } from '../state/gameStore';
 import type { Speed } from '../sim/types';
 
-const SPEEDS: Speed[] = [0, 1, 2, 5, 10];
+const SPEEDS: Speed[] = [0, 1, 2, 3, 5];
 
 function formatNumber(n: number): string {
   if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;

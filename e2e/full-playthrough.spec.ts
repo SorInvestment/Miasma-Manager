@@ -17,7 +17,7 @@ test('full pathogen mode playthrough: start → spread → mutate → end', asyn
   await expect(page.getByTestId('world-map')).toBeVisible();
   await expect(page.getByTestId('day-counter')).toBeVisible();
 
-  await page.getByTestId('speed-10').click();
+  await page.getByTestId('speed-5').click();
   await expect.poll(async () => {
     const txt = await page.getByTestId('day-counter').innerText();
     return Number(txt.match(/(\d+)/)?.[1] ?? 0);
@@ -45,7 +45,7 @@ test('defender mode: deploy intervention end-to-end', async ({ page }) => {
   await page.getByTestId('start-button').click();
 
   await expect(page.getByTestId('budget')).toBeVisible();
-  await page.getByTestId('speed-10').click();
+  await page.getByTestId('speed-5').click();
   await page.waitForTimeout(2500);
   await page.getByTestId('speed-0').click();
 

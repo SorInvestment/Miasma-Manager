@@ -25,7 +25,7 @@ test.describe('defender mode', () => {
     await page.getByTestId('mode-defender').click();
     await page.getByTestId('start-button').click();
     const initial = await page.getByTestId('budget').innerText();
-    await page.getByTestId('speed-10').click();
+    await page.getByTestId('speed-5').click();
     await page.waitForTimeout(3000);
     await page.getByTestId('speed-0').click();
     const after = await page.getByTestId('budget').innerText();

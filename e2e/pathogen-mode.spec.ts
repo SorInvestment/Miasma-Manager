@@ -8,7 +8,7 @@ test.describe('pathogen mode', () => {
     await page.getByTestId('start-button').click();
 
     await expect(page.getByTestId('dna-points')).toBeVisible();
-    await page.getByTestId('speed-10').click();
+    await page.getByTestId('speed-5').click();
 
     await expect.poll(async () => {
       const txt = await page.getByTestId('day-counter').innerText();
